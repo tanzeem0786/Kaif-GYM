@@ -4,9 +4,9 @@ Kaif's GYM is a single-branch gym management system for an admin/owner. The
 approved application architecture is a React + Vite frontend and a Node.js +
 Express modular-monolith backend with MongoDB.
 
-The repository has completed M0, M1, and M2. The frontend remains the Vite
-starter application; the backend provides an Express API foundation, MongoDB
-connection, and admin authentication. Business modules are not implemented yet.
+The repository has completed M0 through M3. The frontend provides a responsive
+admin sign-in and dashboard foundation integrated with the backend's cookie-based
+authentication. Business management modules are not implemented yet.
 
 ## Requirements
 
@@ -116,8 +116,12 @@ npm run lint
 npm run build
 ```
 
-The frontend environment example reserves `VITE_API_BASE_URL` for the API
-client; the current starter UI does not yet make API requests.
+The frontend environment example configures `VITE_API_BASE_URL` for the API
+client (for example, `http://localhost:5000/api/v1`). Admin sign-in, session
+restoration and logout use the backend authentication API with credentialed
+requests. The backend's `CLIENT_URL` and `CORS_ORIGIN` must include the exact
+frontend origin. The JWT remains in the configured HTTP-only cookie and is not
+stored by the frontend in browser storage.
 
 ## Environment and secrets
 
@@ -130,9 +134,16 @@ files; the root `.gitignore` excludes environment files while allowing
 
 ```text
 client/
-  public/
   src/
-    assets/
+    components/       Shared UI and layout components
+    contexts/         Authentication state provider
+    hooks/            Shared React hooks
+    layouts/          Authenticated admin shell
+    pages/            Login and dashboard pages
+    routes/           Public and protected route guards
+    services/         Axios client and API calls
+    styles/           Centralized theme tokens
+    utils/            Shared error helpers
     App.jsx
     main.jsx
 server/
@@ -156,10 +167,6 @@ PROJECT_MASTER.md       Product requirements
 SYSTEM_ARCHITECTURE.md  Technical architecture
 NOTES.md                Audit notes and verification history
 ```
-
-The client currently retains the Vite starter layout. Feature-oriented frontend
-folders in the architecture are deferred until the frontend foundation
-milestone (M3).
 
 The architecture document's proposed `docs/` directory is not created by this
 setup; the existing project documents remain at the repository root.

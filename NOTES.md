@@ -291,4 +291,105 @@ reused. No frontend or unrelated dependencies were added.
   middleware to their protected routes.
 - The default in-memory rate-limit store is process-local; use a shared store if
   the API is later deployed across multiple instances.
-- No frontend login/UI or M3 work was started.
+- Frontend login/UI remained outside M2 scope; it is implemented in the M3
+  section below.
+
+## M3 — Frontend Foundation & Dashboard Layout
+
+### Frontend architecture
+
+- Replaced the Vite starter screen with a React Router application and a
+  responsive admin login/dashboard foundation.
+- Added `components/common` for buttons, cards, badges, text fields and loading
+  UI; `components/layout` for branding and sidebar navigation; `layouts` for the
+  authenticated shell; `pages/auth` and `pages/dashboard`; `routes` for public
+  and protected guards; `contexts` and `hooks` for auth state; `services` for
+  Axios and auth API calls; `utils` for API error messages; and `styles` for
+  the centralized theme.
+- Future navigation items are visibly marked as coming soon. The dashboard
+  displays placeholders, not invented member, revenue or other business
+  metrics.
+- The legacy `src/style/theme.css` path remains as an import of the canonical
+  `src/styles/theme.css`.
+
+### Theme and dependencies
+
+- Confirmed Tailwind CSS v4.3.3 and integrated it through `@tailwindcss/vite`
+  and CSS-first `@theme inline` mappings; no competing Tailwind config was
+  added.
+- Central `:root` properties in `client/src/styles/theme.css` define the
+  background, sidebar, surfaces, primary/secondary/muted text, border, primary
+  action, focus/hover, success/warning/danger/info and overlay colors. Tailwind
+  semantic utilities map to these values.
+- Added `react-router-dom` for routing, `axios` for API calls, `lucide-react`
+  for icons, and `tailwindcss` plus its Vite plugin for styling. React, Vite
+  and existing lint dependencies were reused.
+- The production dependency audit reported zero vulnerabilities. The full npm
+  audit reported six moderate findings in existing development tooling through
+  ESLint/minimatch; npm reported no available fix. No forced or unrelated
+  dependency upgrades were made.
+
+### Authentication integration
+
+- Axios reads `VITE_API_BASE_URL` and sends requests with `withCredentials:
+  true`; it does not persist the JWT or credentials in browser storage.
+- The auth provider restores the session with `GET /auth/me`, keeps admin
+  profile state in memory, handles loading/unauthorized/server-error states,
+  and exposes login/logout actions.
+- Login, logout and session restoration use the existing `/api/v1/auth/*`
+  endpoints. Protected routes redirect to login; session-restoration server
+  errors offer a retry. Logout only clears local auth state after the backend
+  confirms logout.
+- Login includes browser email/password validation, visibility toggle,
+  loading feedback and API error feedback. No registration, reset, OTP, member
+  or trainer auth was added.
+- Live CORS smoke checks from `http://localhost:5173` received the configured
+  exact `Access-Control-Allow-Origin` and `Access-Control-Allow-Credentials`
+  headers. Backend health returned HTTP 200 with MongoDB connected. A real
+  invalid-credentials login returned the expected error through the frontend.
+  Successful real-admin login was not attempted; interactive development
+  credentials were not used or inspected. Existing M2 tests cover cookie
+  security flags and logout clearing.
+
+### Environment, files and verification
+
+- `client/.env.example` already configures `VITE_API_BASE_URL`; it was retained.
+  Real `.env` files were not inspected or modified. `git check-ignore -v` confirmed
+  `client/.env` and `server/.env` are ignored, and both `.env.example` files
+  remain trackable.
+- Root README now documents the M3 frontend setup, authentication integration
+  and updated client structure.
+- Created or updated frontend files: `client/index.html`,
+  `client/vite.config.js`, `client/src/App.jsx`, `client/src/App.css`,
+  `client/src/index.css`, `client/src/styles/theme.css`,
+  `client/src/style/theme.css`, `client/src/contexts/AuthContext.jsx`,
+  `client/src/contexts/authContext.js`, `client/src/hooks/useAuth.js`,
+  `client/src/layouts/AdminLayout.jsx`, `client/src/routes/ProtectedRoute.jsx`,
+  `client/src/routes/PublicOnlyRoute.jsx`,
+  `client/src/services/apiClient.js`, `client/src/services/authApi.js`,
+  `client/src/utils/apiError.js`,
+  `client/src/components/common/{Badge,Button,Card,LoadingScreen,TextField}.jsx`,
+  `client/src/components/layout/{Brand,Sidebar}.jsx`,
+  `client/src/pages/auth/LoginPage.jsx`, and
+  `client/src/pages/dashboard/DashboardPage.jsx`.
+- `npm --prefix client run lint`: passed.
+- `npm --prefix client run build`: passed; Vite transformed 2,128 modules and
+  produced the production bundle.
+- Browser verification with isolated mocked auth responses covered invalid
+  login feedback, successful login, `/auth/me` session restoration after
+  refresh, logout, protected-route redirect, password visibility and mobile
+  navigation at 390px.
+- Live API checks confirmed credentialed CORS behavior, MongoDB health and
+  invalid-credential error handling. Authenticated browser login with real
+  credentials was intentionally not attempted.
+- Theme scan of React components found no hardcoded hex colors or direct
+  Tailwind white/black/gray/zinc color utilities.
+
+### Pending / not in M3
+
+- Member, membership, trainer, payment, commission and other business modules
+  remain future milestones.
+- A production deployment still needs its exact frontend origin configured in
+  the backend CORS allowlist and an appropriate cookie SameSite/Secure policy.
+- No frontend test-runner dependency was added; M3 UI behavior was exercised
+  in the browser, while backend auth behavior remains covered by the M2 suite.
