@@ -1,0 +1,12 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Tanzeem Ahmad",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    
+  }
+}
