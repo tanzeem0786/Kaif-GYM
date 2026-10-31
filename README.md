@@ -4,9 +4,9 @@ Kaif's GYM is a single-branch gym management system for an admin/owner. The
 approved application architecture is a React + Vite frontend and a Node.js +
 Express modular-monolith backend with MongoDB.
 
-The repository has completed M0 and M1. The frontend remains the Vite starter
-application; the backend now provides an Express API foundation and MongoDB
-connection. Admin authentication and business modules are not implemented yet.
+The repository has completed M0, M1, and M2. The frontend remains the Vite
+starter application; the backend provides an Express API foundation, MongoDB
+connection, and admin authentication. Business modules are not implemented yet.
 
 ## Requirements
 
@@ -22,13 +22,20 @@ In PowerShell, from the repository root:
 cd server
 npm ci
 Copy-Item .env.example .env
+npm run seed:admin
 npm run dev
 ```
 
 Edit `server/.env` before starting: set `MONGODB_URI` to a reachable database
-and replace the example `JWT_SECRET` with a random value of at least 32
+and replace the example `JWT_SECRET` with a private random value of at least 32
 characters. The server validates configuration before connecting and starts
 listening only after MongoDB connects.
+
+The bootstrap command requires an interactive terminal. It prompts for the
+admin name and email, then reads and confirms the password without echoing its
+characters. Passwords must be at least 12 characters and no more than 72
+UTF-8 bytes. Only one owner admin can be created; public registration is not
+available.
 
 Run backend tests with:
 
@@ -45,9 +52,9 @@ Use `npm start` for the non-watch server process.
 | `NODE_ENV` | `development`, `test`, or `production` (defaults to `development`) |
 | `PORT` | HTTP port from 1 to 65535 (defaults to `5000`) |
 | `MONGODB_URI` | Required `mongodb://` or `mongodb+srv://` connection URI |
-| `JWT_SECRET` | Required secret with at least 32 characters; reserved for authentication work |
-| `JWT_EXPIRES_IN` | Required JWT lifetime setting; reserved for authentication work |
-| `COOKIE_NAME` | Required cookie name; reserved for authentication work |
+| `JWT_SECRET` | Required secret with at least 32 characters |
+| `JWT_EXPIRES_IN` | Required positive duration such as `15m`, `12h`, or `1d`; used for the JWT and cookie lifetime |
+| `COOKIE_NAME` | Required name for the HTTP-only admin session cookie |
 | `COOKIE_SECURE` | Required `true` or `false` cookie flag; must be `true` in production |
 | `COOKIE_SAME_SITE` | Required `strict`, `lax`, or `none`; `none` requires secure cookies |
 | `CLIENT_URL` | Required frontend HTTP(S) origin |
@@ -62,10 +69,28 @@ in `.env`, which Git ignores.
 - `GET /api/v1` reports that the versioned API is available.
 - `GET /api/v1/health` reports application and MongoDB connection status. It
   returns HTTP 503 when MongoDB is not connected.
+- `POST /api/v1/auth/login` accepts `{ "email": "...", "password": "..." }`,
+  sets the configured HTTP-only cookie and returns only the admin profile.
+- `POST /api/v1/auth/logout` clears the configured cookie.
+- `GET /api/v1/auth/me` returns the authenticated admin profile; it requires
+  the session cookie.
 
 Successful API responses use `{ "success": true, "message": "...", "data": ... }`.
 Errors use `{ "success": false, "message": "...", "errors": [] }`; internal
 errors are not returned to clients.
+
+JWTs are signed with HS256, carry the admin ID as their subject, and are read
+only from the HTTP-only cookie (not returned in JSON). Login requests are
+limited to five attempts per IP per 15 minutes per server process. Invalid
+credentials share a generic response; inactive admins cannot log in or
+continue using a session. Protected admin routes must use the authentication
+middleware.
+
+Backend tests use a unique temporary database name derived from
+`MONGODB_TEST_URI` (or a local MongoDB test URI) and drop only that temporary
+database after the auth tests complete. Ensure the test MongoDB account can
+create and drop databases; the normal `MONGODB_URI` development database is not
+used for auth test data.
 
 Multi-document MongoDB transactions require a replica set (including a
 single-node replica set) or a sharded cluster; a standalone MongoDB server does

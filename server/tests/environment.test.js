@@ -20,6 +20,7 @@ test('parses valid environment values and normalizes configured origins', () => 
 
   assert.equal(config.PORT, 5000)
   assert.equal(config.COOKIE_SECURE, false)
+  assert.equal(config.JWT_EXPIRES_IN, 86400)
   assert.deepEqual(config.CORS_ORIGIN, [
     'http://localhost:5173',
     'https://admin.example.com',
@@ -47,6 +48,10 @@ test('rejects invalid ports and MongoDB URIs', () => {
   assert.throws(
     () => parseEnvironment({ ...validEnvironment, MONGODB_URI: 'https://db.example.com' }),
     /MONGODB_URI:/,
+  )
+  assert.throws(
+    () => parseEnvironment({ ...validEnvironment, JWT_EXPIRES_IN: 'yesterday' }),
+    /JWT_EXPIRES_IN:/,
   )
 })
 

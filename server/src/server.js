@@ -12,6 +12,7 @@ async function startServer() {
   const app = createApp({
     allowedOrigins: config.CORS_ORIGIN,
     getDatabaseState: getDatabaseStatus,
+    authConfig: config,
   })
   const server = app.listen(config.PORT)
   try {

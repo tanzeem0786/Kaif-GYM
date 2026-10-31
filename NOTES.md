@@ -179,3 +179,116 @@ Development uses Node's built-in `--watch`; tests use the built-in
 - No business models or domain modules were added.
 - Future transaction-based operations need MongoDB configured as a replica set
   or sharded cluster.
+
+---
+
+# M2 — Admin Authentication & Security
+
+**Date:** 2026-11-01
+
+## Implemented
+
+- Added the Mongoose Admin model with normalized/validated email, unique email
+  index, hidden bcrypt password hash, active status, timestamps, and a hidden
+  unique owner bootstrap key. The owner key enforces the one-admin bootstrap
+  rule even if two CLI attempts race.
+- Passwords use bcrypt with 12 salt rounds. Login uses a dummy bcrypt hash for
+  unknown accounts so that path still performs a password comparison.
+  Plaintext passwords and hashes are never returned or logged.
+- Added an interactive `npm run seed:admin` CLI. It refuses to run without a
+  TTY, masks password input, confirms the password, validates the account,
+  checks for an existing admin and handles duplicate-key races.
+- Added `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, and
+  `GET /api/v1/auth/me`. There is no registration endpoint.
+- JWTs use HS256, the admin ID subject, issuer/audience checks, and configured
+  expiry. The token exists only in the configured HTTP-only cookie. Cookie
+  `Secure`, `SameSite`, `Path`, and expiry are applied consistently on login
+  and logout.
+- Added reusable cookie-based admin authentication middleware. It rejects
+  missing, invalid, expired, deleted, and inactive-admin sessions.
+- Login is limited to five attempts per IP per 15 minutes per process and uses
+  standard rate-limit headers. Input is validated with Zod; passwords are
+  limited to bcrypt's 72-byte input limit and bootstrap passwords require at
+  least 12 characters.
+- Authentication is mounted on the existing versioned API with production
+  configuration. M1 health handling, database connection, CORS and error
+  conventions remain in place.
+
+## Security decisions
+
+- A unique hidden `bootstrapKey` index enforces the single owner account
+  requirement independently of email uniqueness and protects concurrent seed
+  attempts.
+- Admin profiles are allowlisted (`id`, `name`, `email`); password hashes,
+  cookie JWTs, and secrets are excluded from API responses and request logs.
+- Tokens are accepted only from the configured cookie and verified for
+  HS256, issuer, audience, and expiration.
+- Login failures return the same unauthorized response for unknown, inactive,
+  or incorrect credentials. Missing/malformed request fields return the
+  existing consistent validation response.
+- Production environment validation requires secure cookies; SameSite behavior
+  follows `COOKIE_SAME_SITE`, and `SameSite=None` requires `Secure`.
+- No public registration, reset flow, OTP, member authentication or trainer
+  authentication was added.
+
+## Environment and API
+
+- Existing backend environment variables are retained. `JWT_EXPIRES_IN` now
+  validates a positive duration such as `15m`, `12h`, or `1d`; it is converted
+  to seconds and shared by JWT expiry and cookie max-age.
+- `npm run seed:admin` creates the first admin from interactive input. The
+  password is masked and confirmed; the command requires a reachable MongoDB
+  and a TTY.
+- `POST /api/v1/auth/login` — validate credentials and set the auth cookie.
+- `POST /api/v1/auth/logout` — clear the configured cookie.
+- `GET /api/v1/auth/me` — protected current-admin profile.
+- No registration route exists.
+
+## Files created or modified
+
+- Modified: `server/package.json`, `server/package-lock.json`,
+  `server/.env.example`, `server/src/configs/environment.js`,
+  `server/src/app.js`, `server/src/server.js`,
+  `server/src/routes/api.routes.js`, root `README.md`, and this `NOTES.md`.
+- Added `server/src/modules/auth/admin.model.js`,
+  `auth.validation.js`, `auth.service.js`, `admin.service.js`,
+  `auth.middleware.js`, `auth.controller.js`, and `auth.routes.js`.
+- Added `server/src/scripts/bootstrapAdmin.js` and
+  `server/tests/auth.test.js`.
+
+## Dependencies installed
+
+- `bcrypt` — password hashing and comparison.
+- `jsonwebtoken` — signed, expiring admin sessions.
+- `express-rate-limit` — per-IP login throttling.
+
+Existing Express, Mongoose, Zod, cookie-parser and middleware dependencies were
+reused. No frontend or unrelated dependencies were added.
+
+## Commands and actual test results
+
+- `npm install bcrypt jsonwebtoken express-rate-limit` in `server/`: passed;
+  npm reported 0 vulnerabilities.
+- `npm ci` in `server/` after the dependency change: passed; npm reported 0
+  vulnerabilities and warned that the bcrypt install script was not approved.
+- bcrypt native module/hash/compare smoke check: passed.
+- `npm test -- --test-reporter=tap` in `server/`: passed, 23 tests, 0 failures.
+  Auth tests use a process-unique temporary MongoDB database derived from
+  `MONGODB_TEST_URI` (default: local MongoDB) and drop only that test database.
+- Live CLI server smoke test: passed; MongoDB health returned HTTP 200 and
+  unauthenticated `GET /api/v1/auth/me` returned HTTP 401.
+- Auth integration coverage includes concurrent duplicate bootstrap, normalized
+  email login, cookie flags/expiry, missing and invalid credentials, inactive
+  admin, missing/invalid/expired JWT, protected `/me`, logout cookie clearing,
+  and login rate limiting.
+
+## Pending / not in M2
+
+- The bootstrap CLI's real interactive password prompt was not manually
+  exercised; the bootstrap service and duplicate-prevention path were tested
+  against the isolated test database.
+- Future admin-only modules still need to attach the reusable authentication
+  middleware to their protected routes.
+- The default in-memory rate-limit store is process-local; use a shared store if
+  the API is later deployed across multiple instances.
+- No frontend login/UI or M3 work was started.

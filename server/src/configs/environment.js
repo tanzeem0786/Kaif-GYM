@@ -23,6 +23,18 @@ const originSchema = z
   }, 'must be an HTTP(S) origin without a path, query, or credentials')
   .transform((value) => new URL(value).origin)
 
+const jwtExpirySchema = z
+  .string()
+  .trim()
+  .regex(/^[1-9]\d*[smhd]$/, 'must be a positive duration such as 15m, 12h, or 1d')
+  .transform((value) => {
+    const amount = Number.parseInt(value, 10)
+    const unit = value.at(-1)
+    const secondsPerUnit = { s: 1, m: 60, h: 3600, d: 86400 }
+    return amount * secondsPerUnit[unit]
+  })
+  .refine(Number.isSafeInteger, 'must be a safe integer duration')
+
 const environmentSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -33,7 +45,7 @@ const environmentSchema = z
       .min(1, 'is required')
       .regex(/^mongodb(?:\+srv)?:\/\//, 'must be a mongodb:// or mongodb+srv:// URI'),
     JWT_SECRET: z.string().min(32, 'must contain at least 32 characters'),
-    JWT_EXPIRES_IN: z.string().trim().min(1, 'is required'),
+    JWT_EXPIRES_IN: jwtExpirySchema,
     COOKIE_NAME: z
       .string()
       .trim()
