@@ -1,12 +1,27 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "",
+  "description": "Kaif's GYM API server",
   "license": "ISC",
   "author": "Tanzeem Ahmad",
   "type": "module",
-  "main": "server.js",
+  "main": "src/server.js",
   "scripts": {
-    
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "seed:admin": "node src/scripts/bootstrapAdmin.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.2",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.24.7",
+    "zod": "^4.6.7"
   }
 }
