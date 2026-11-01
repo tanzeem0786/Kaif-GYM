@@ -483,5 +483,133 @@ reused. No frontend or unrelated dependencies were added.
 - Member-plus-audit persistence is not atomic on the current standalone MongoDB
   topology; use a replica set and transactions if atomic audit consistency is
   required.
-- Membership/payment history, plans, subscriptions, trainer assignments and
-  all other non-M4 business modules remain unimplemented.
+- At M4 completion, membership plans and subscriptions, payment history, trainer
+  assignments and other later modules remained unimplemented. M5 now implements
+  plans and membership records; the remaining modules are still pending.
+
+## M5 — Membership Plans & Membership Management
+
+### Backend implementation
+
+- Added the `MembershipPlan` and `Membership` Mongoose models under
+  `server/src/modules/memberships/models/`.
+- Plans support only 1, 3, 6 and 12 calendar months. Plan price is stored as a
+  non-negative safe integer `pricePaise`; plan create/read/update/list and
+  active/inactive status APIs are admin-protected. There is no permanent delete
+  endpoint.
+- Memberships snapshot plan name, duration and price in paise. Fee, paid and
+  balance fields are `totalFeePaise`, `amountPaidPaise` and
+  `outstandingBalancePaise`; on assignment paid starts at zero and the balance
+  is the full fee. Payment processing is not included.
+- Membership dates are date-only UTC. The user-confirmed expiry convention is
+  exclusive: `startDate` is the first valid day and `expiryDate` is the first
+  invalid day, calculated by adding calendar months and clamping to the target
+  month's last day. Initial assignment accepts an admin-selected date.
+- Early renewal starts at the current membership's expiry boundary. A renewal
+  after expiry uses the admin-selected date (or UTC today), clamped not to
+  precede the previous expiry. Membership records remain separate and link to
+  their predecessor through `renewalOf`.
+- Added unique membership-code and compound `(member, renewalOf)` indexes to
+  prevent duplicate initial assignments and competing renewals. Added the
+  documented member/start-date, status/expiry-date and expiry-date indexes.
+  Plan indexes cover name and active status/duration.
+- Zod validates all plan and membership bodies, IDs and query values. Inactive
+  plans cannot be assigned. Membership list APIs support text search, status,
+  member and plan filters, sorting and pagination.
+- Active memberships whose exclusive expiry boundary is reached are marked
+  `expired` by a one-minute background job and before membership list, detail
+  and summary responses. Expiry transitions are audited as system actions.
+- Plan changes, assignment, renewal and expiry write append-only audit records.
+  The shared audit schema now supports `actorType: system` with no admin actor
+  for automatic expiry; existing admin actions retain an admin actor.
+- API routes:
+  - `/api/v1/membership-plans`: list/create; `/:planId`: get/update;
+    `/:planId/status`: activate/deactivate.
+  - `/api/v1/memberships`: list/initial assignment; `/summary`: current
+    counts; `/member/:memberId`: member history; `/:membershipId`: detail;
+    `/:membershipId/renew`: sequential renewal.
+- Membership and audit writes are awaited sequentially for compatibility with
+  the current standalone MongoDB topology. Audit failures are surfaced, but
+  record and audit writes are not atomic; transactions would require a replica
+  set or sharded cluster.
+
+### Freeze policy decision
+
+- Freeze/unfreeze UI, APIs and expiry extension were deferred at the user's
+  direction because the approved project documents still leave freeze
+  backdating, expired-membership eligibility, overlapping periods, partial-day
+  counting and renewal during an open freeze undecided. The schema retains the
+  documented `frozen` status for compatibility, but M5 does not create or
+  mutate frozen memberships. No payment, refund, trainer, or commission logic
+  was added.
+
+### Frontend implementation
+
+- Added authenticated plan pages at `/membership-plans` with search, status
+  filtering, pagination, create/edit forms and confirmation for deactivation
+  or reactivation.
+- Added membership assignment, paginated/searchable membership history,
+  details and renewal pages. Member search reuses M4's member API; member
+  details link to assignment and member-specific history.
+- Early-renewal UI explains and uses the existing expiry boundary. Membership
+  details display status, plan snapshot, UTC validity dates, renewal chain and
+  paise-derived fee/paid/outstanding display. No payment actions are exposed.
+- Dashboard counts for currently valid memberships, expired memberships and
+  active plans are loaded from the protected API; load and API errors are
+  displayed. Counts are actual API values, not fabricated metrics.
+- All M5 UI colors use the established semantic Tailwind theme tokens. No new
+  frontend or backend dependencies were added.
+
+### Files created or modified
+
+- Backend created: `server/src/modules/memberships/models/membershipPlan.model.js`,
+  `membership.model.js`, `server/src/modules/memberships/membership.validation.js`,
+  `membership.service.js`, `membership.controller.js`, `membership.routes.js`,
+  `server/src/jobs/membershipExpiry.job.js`, and
+  `server/tests/memberships.test.js`.
+- Backend modified: `server/src/app.js`, `server/src/routes/api.routes.js`,
+  `server/src/server.js`, and `server/src/modules/audit/auditLog.model.js`.
+- Frontend created: `client/src/services/membershipApi.js`,
+  `client/src/utils/membershipFormat.js`,
+  `client/src/components/memberships/MembershipStatusBadge.jsx`,
+  `MembershipPlanForm.jsx`, `client/src/pages/memberships/MembershipPlansPage.jsx`,
+  `MembershipPlanFormPage.jsx`, `MembershipsPage.jsx`, `MembershipFormPage.jsx`,
+  and `MembershipDetailsPage.jsx`.
+- Frontend modified: `client/src/App.jsx`,
+  `client/src/components/layout/Sidebar.jsx`,
+  `client/src/layouts/AdminLayout.jsx`,
+  `client/src/pages/dashboard/DashboardPage.jsx`,
+  `client/src/pages/members/MembersPage.jsx`, and
+  `client/src/pages/members/MemberDetailsPage.jsx`.
+- Documentation modified: root `README.md` and `NOTES.md`.
+
+### Verification
+
+- `Set-Location server; npm test`: passed, 46 tests, 0 failures. Includes the
+  existing M1–M4 tests plus plan validation and CRUD, all four supported
+  durations, month-end date calculation, price snapshots, assignment,
+  duplicates/concurrent requests, invalid dates and queries, sequential early
+  renewal,   non-overlap clamping, expired renewal, inactive/frozen renewal rejection,
+  list/search/pagination, expiry status/audit synchronization, and
+  authorization.
+- `npm --prefix client run lint`: passed.
+- `npm --prefix client run build`: passed; Vite transformed 2,145 modules and
+  generated the production bundle (415.72 kB JavaScript, 31.18 kB CSS before
+  gzip).
+- Theme scan over new membership UI and the dashboard found no hardcoded hex
+  colors or direct white/black/gray/zinc color utilities.
+- `node --check server\src\server.js` and
+  `node --check server\src\jobs\membershipExpiry.job.js`: passed.
+- `git diff --check`: passed after final source and documentation changes.
+- No browser-based UI flow was run for M5.
+- No real `.env` files were inspected or modified.
+
+### Pending
+
+- Freeze/unfreeze remains deferred until the unresolved policy decisions listed
+  above are approved; the roadmap includes the feature, but the project rules
+  prohibit inventing its persisted date behavior.
+- Membership record and audit writes are not atomic on standalone MongoDB.
+- Payment recording, balance updates from receipts, trainer assignments and
+  commission calculations remain later milestones.
+- Frontend workflows passed lint/build but were not browser-verified.

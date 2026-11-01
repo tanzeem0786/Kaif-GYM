@@ -107,8 +107,7 @@ export function MembersPage() {
           </div>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight">Members</h2>
           <p className="mt-2 text-sm text-text-secondary">
-            Create and maintain member profiles. Membership and payment history will be available
-            in later milestones.
+            Create and maintain member profiles, with membership assignment and history available from each profile.
           </p>
         </div>
         <Button as={Link} to="/members/new">

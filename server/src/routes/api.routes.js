@@ -3,6 +3,10 @@ import { createHealthRouter } from './health.routes.js'
 import { sendSuccess } from '../utils/ApiResponse.js'
 import { createAuthRouter } from '../modules/auth/auth.routes.js'
 import { createMemberRouter } from '../modules/members/member.routes.js'
+import {
+  createMembershipPlanRouter,
+  createMembershipRouter,
+} from '../modules/memberships/membership.routes.js'
 
 export function createApiRouter({
   getDatabaseState,
@@ -10,6 +14,8 @@ export function createApiRouter({
   AdminModel,
   MemberModel,
   AuditLogModel,
+  MembershipModel,
+  MembershipPlanModel,
   loginRateLimit,
   loginWindowMs,
 }) {
@@ -28,6 +34,16 @@ export function createApiRouter({
       '/members',
       createMemberRouter({ authConfig, AdminModel, MemberModel, AuditLogModel }),
     )
+    const membershipDependencies = {
+      authConfig,
+      AdminModel,
+      MemberModel,
+      MembershipModel,
+      MembershipPlanModel,
+      AuditLogModel,
+    }
+    apiRouter.use('/membership-plans', createMembershipPlanRouter(membershipDependencies))
+    apiRouter.use('/memberships', createMembershipRouter(membershipDependencies))
   }
 
   return apiRouter

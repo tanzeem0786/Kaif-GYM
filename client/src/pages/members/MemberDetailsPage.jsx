@@ -268,16 +268,32 @@ export function MemberDetailsPage() {
           </Card>
           <Card className="p-5 sm:p-6">
             <div className="flex items-center gap-2">
-              <Badge variant="neutral">Later milestone</Badge>
+              <Badge variant="neutral">M7</Badge>
             </div>
-            <h3 className="mt-4 text-base font-semibold">Membership and payment history</h3>
+            <h3 className="mt-4 text-base font-semibold">Payment history</h3>
             <p className="mt-2 text-sm leading-6 text-text-secondary">
-              Memberships and payment records are not part of M4. This area will show historical
-              records when those modules are implemented.
+              Payment records will be available when payment management is implemented.
             </p>
           </Card>
         </div>
       </div>
+
+      <Card className="flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
+        <div>
+          <h3 className="text-base font-semibold">Memberships</h3>
+          <p className="mt-1 text-sm text-text-secondary">
+            Assign a plan or review this member&apos;s renewal history.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button as={Link} to={`/memberships/new?memberId=${member._id}`} variant="primary">
+            Assign membership
+          </Button>
+          <Button as={Link} to={`/memberships?memberId=${member._id}`} variant="secondary">
+            View membership history
+          </Button>
+        </div>
+      </Card>
 
       {confirmation && (
         <ConfirmDialog

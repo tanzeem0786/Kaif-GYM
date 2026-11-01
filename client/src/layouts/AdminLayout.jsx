@@ -24,9 +24,13 @@ export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState('')
-  const pageTitle = location.pathname.startsWith('/members')
-    ? 'Members'
-    : 'Dashboard'
+  const pageTitle = location.pathname.startsWith('/membership-plans')
+    ? 'Membership Plans'
+    : location.pathname.startsWith('/memberships')
+      ? 'Memberships'
+      : location.pathname.startsWith('/members')
+        ? 'Members'
+        : 'Dashboard'
 
   async function handleLogout() {
     setLoggingOut(true)

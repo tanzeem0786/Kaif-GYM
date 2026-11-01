@@ -3,6 +3,12 @@ import { createApp } from './app.js'
 import { connectDatabase, disconnectDatabase, getDatabaseStatus } from './configs/database.js'
 import { parseEnvironment } from './configs/environment.js'
 import { createGracefulShutdown } from './utils/gracefulShutdown.js'
+import { createMembershipExpiryJob } from './jobs/membershipExpiry.job.js'
+import { createMembershipService } from './modules/memberships/membership.service.js'
+import { Membership } from './modules/memberships/models/membership.model.js'
+import { MembershipPlan } from './modules/memberships/models/membershipPlan.model.js'
+import { Member } from './modules/members/member.model.js'
+import { AuditLog } from './modules/audit/auditLog.model.js'
 
 async function startServer() {
   const config = parseEnvironment()
@@ -13,6 +19,15 @@ async function startServer() {
     allowedOrigins: config.CORS_ORIGIN,
     getDatabaseState: getDatabaseStatus,
     authConfig: config,
+  })
+  const membershipService = createMembershipService({
+    MemberModel: Member,
+    MembershipModel: Membership,
+    MembershipPlanModel: MembershipPlan,
+    AuditLogModel: AuditLog,
+  })
+  const membershipExpiryJob = createMembershipExpiryJob({
+    expireMemberships: () => membershipService.expireMemberships(),
   })
   const server = app.listen(config.PORT)
   try {
@@ -33,10 +48,12 @@ async function startServer() {
     }),
   )
 
+  membershipExpiryJob.start()
   const shutdown = createGracefulShutdown({ server, disconnectDatabase })
 
   for (const signal of ['SIGINT', 'SIGTERM']) {
     process.on(signal, () => {
+      membershipExpiryJob.stop()
       shutdown(signal).catch(() => {
         process.exitCode = 1
       })

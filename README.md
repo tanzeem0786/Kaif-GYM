@@ -4,10 +4,11 @@ Kaif's GYM is a single-branch gym management system for an admin/owner. The
 approved application architecture is a React + Vite frontend and a Node.js +
 Express modular-monolith backend with MongoDB.
 
-The repository has completed M0 through M4. The frontend provides a responsive
-admin sign-in, member management and dashboard foundation integrated with the
-backend's cookie-based authentication. Membership, trainer, payment and
-commission modules are not implemented yet.
+The repository has implemented M0 through M5, including admin sign-in, member
+management, membership plans and membership history, integrated with the
+backend's cookie-based authentication. Freeze/unfreeze remains deferred pending
+approved date policies. Trainers, payments, commissions and other later
+modules are not implemented yet.
 
 ## Requirements
 
@@ -142,6 +143,57 @@ single-node replica set) or a sharded cluster; a standalone MongoDB server does
 not support them. Future financial amounts should be represented as integer
 paise, not floating-point rupees.
 
+### Membership plans and memberships (M5)
+
+All M5 endpoints require the authenticated admin session cookie. Plans are
+deactivated rather than deleted, and membership records are immutable history
+entries linked by `renewalOf`.
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/api/v1/membership-plans` | Search, filter and paginate plans |
+| `POST` | `/api/v1/membership-plans` | Create a plan |
+| `GET` | `/api/v1/membership-plans/:planId` | Get a plan |
+| `PATCH` | `/api/v1/membership-plans/:planId` | Edit plan details and current price |
+| `PATCH` | `/api/v1/membership-plans/:planId/status` | Activate or safely deactivate a plan |
+| `GET` | `/api/v1/memberships` | Search, filter and paginate membership history |
+| `GET` | `/api/v1/memberships/summary` | Return current, expired and active-plan counts |
+| `GET` | `/api/v1/memberships/member/:memberId` | Get a member's membership history |
+| `POST` | `/api/v1/memberships` | Assign the first plan to an existing member |
+| `GET` | `/api/v1/memberships/:membershipId` | Get membership details |
+| `POST` | `/api/v1/memberships/:membershipId/renew` | Create the next membership in the renewal chain |
+
+Plan bodies use `name`, `durationMonths` (`1`, `3`, `6`, or `12`),
+`pricePaise` (a non-negative safe integer), and optional `description`.
+Membership assignment accepts `{ "memberId": "...", "planId": "...",
+"startDate": "YYYY-MM-DD" }`. Renewal accepts `planId` and an optional
+`startDate`; an early renewal always starts at the current record's expiry
+boundary. A later requested date is honored after expiry, but a date before the
+prior expiry is clamped to that boundary.
+
+Dates are date-only UTC values. The start is inclusive and expiry is exclusive:
+expiry is the start date plus the plan's calendar-month duration, clamped to
+the target month's last day. A renewal starts at the previous expiry date,
+so membership validity periods do not overlap. Membership fee and price
+snapshots are stored as integer paise (`totalFeePaise`,
+`amountPaidPaise`, and `outstandingBalancePaise`). Amount paid starts at zero;
+payment recording and balance updates belong to a later milestone.
+
+Memberships preserve a plan-name, duration and price snapshot. Changing the
+plan later does not change existing membership records. Unique membership
+sequence indexes prevent duplicate initial assignments or competing renewals.
+An expiry worker synchronizes expired statuses every minute; membership list,
+detail and summary requests also synchronize status before responding.
+Automatic expiry is attributed to the system in the append-only audit log.
+Membership and audit writes are sequential on the current standalone MongoDB;
+an audit failure after a successful record write is surfaced, but the two
+writes are not atomic.
+
+Freeze/unfreeze is not implemented. Although listed in the M5 roadmap, the
+project's approved documents leave its start/backdating, partial-day, overlap,
+expired-membership and renewal-during-freeze policies unresolved. Payments,
+refunds, trainer assignments and commission calculations are also out of scope.
+
 ## Frontend setup
 
 In PowerShell, from the repository root:
@@ -184,7 +236,7 @@ client/
     contexts/         Authentication state provider
     hooks/            Shared React hooks
     layouts/          Authenticated admin shell
-    pages/            Login, dashboard and member pages
+    pages/            Login, dashboard, member, plan and membership pages
     routes/           Public and protected route guards
     services/         Axios client and API calls
     styles/           Centralized theme tokens
@@ -201,6 +253,7 @@ server/
     modules/
       audit/
       members/
+      memberships/
     routes/
     scripts/
     services/
