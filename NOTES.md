@@ -387,9 +387,101 @@ reused. No frontend or unrelated dependencies were added.
 
 ### Pending / not in M3
 
-- Member, membership, trainer, payment, commission and other business modules
-  remain future milestones.
+- Membership, trainer, payment, commission and other business modules remain
+  future milestones.
 - A production deployment still needs its exact frontend origin configured in
   the backend CORS allowlist and an appropriate cookie SameSite/Secure policy.
 - No frontend test-runner dependency was added; M3 UI behavior was exercised
   in the browser, while backend auth behavior remains covered by the M2 suite.
+
+## M4 — Member Management
+
+### Backend implementation
+
+- Added `members` and `auditLogs` Mongoose models. Member profile fields follow
+  `DATABASE_DESIGN.md`; the approved M4 nested shapes are `address: { text }`
+  and optional `emergencyContact: { name, phone }`. Member status supports
+  `active`, `inactive` and `archived`.
+- Added indexes: unique `memberCode`, non-unique `phone` and `status`;
+  audit-log indexes on `module + createdAt` and `entityId + createdAt`.
+- Generated unique member codes as `KG-` followed by 12 random uppercase hex
+  characters. The database unique index is authoritative and collisions are
+  retried. Phone/email are not unique because the finalized database design
+  defines only member-code uniqueness.
+- Local 10-digit Indian mobile numbers (including optional trunk `0`) normalize
+  to `+91`; international numbers must include a country prefix and validate
+  as E.164. Email is optional and normalized to lowercase.
+- Added admin-protected routes:
+  - `POST /api/v1/members` — create.
+  - `GET /api/v1/members` — search, status filter, sort and pagination.
+  - `GET /api/v1/members/:memberId` — details.
+  - `PATCH /api/v1/members/:memberId` — profile update.
+  - `PATCH /api/v1/members/:memberId/status` — activate, deactivate or archive.
+- Zod validates request bodies, IDs and query values. Member operations write
+  append-only audit events with actor, action, module, entity, status and
+  changed-field metadata; audit records do not duplicate contact values.
+- No public/member authentication, membership logic, trainer assignment,
+  payment logic or permanent member deletion was added.
+- Member writes and audit writes are awaited sequentially instead of using a
+  transaction, because the configured/test MongoDB is standalone and rejects
+  transactions. Audit failures are surfaced, not swallowed, but a database
+  failure between the two writes can leave a completed member change without
+  its event. Atomicity would require a replica set and a future transaction
+  decision.
+
+### Frontend implementation
+
+- Added the member directory with search, status filtering, registration-date
+  sort, pagination, loading, empty, retry and API-error states.
+- Added create/edit forms with server validation feedback; member details with
+  profile, status and clearly marked later-milestone history placeholders.
+- Added confirmation dialogs for deactivation, archival and reactivation.
+- Wired the Members sidebar entry and authenticated routes. M4 pages use only
+  existing semantic theme tokens; the dashboard now links to the implemented
+  member directory.
+- No dependency changes were needed.
+
+### Files created or modified
+
+- Backend: `server/src/app.js`, `server/src/routes/api.routes.js`,
+  `server/src/modules/members/member.model.js`,
+  `member.validation.js`, `member.service.js`, `member.controller.js`,
+  `member.routes.js`, `server/src/modules/audit/auditLog.model.js`, and
+  `server/tests/members.test.js`.
+- Frontend: `client/src/App.jsx`, `client/src/components/common/Button.jsx`,
+  `client/src/components/layout/Sidebar.jsx`,
+  `client/src/components/members/MemberStatusBadge.jsx`,
+  `MemberForm.jsx`, `ConfirmDialog.jsx`,
+  `client/src/layouts/AdminLayout.jsx`,
+  `client/src/pages/dashboard/DashboardPage.jsx`,
+  `client/src/pages/members/MembersPage.jsx`,
+  `MemberFormPage.jsx`, `MemberDetailsPage.jsx`,
+  `client/src/services/memberApi.js`, and `client/src/utils/memberForm.js`.
+- Documentation: root `README.md` and `NOTES.md`.
+
+### Verification
+
+- Isolated `node --test tests/members.test.js` in `server/`: passed, 8 tests,
+  0 failures. Covered create and normalized fields, invalid phone/email/date,
+  invalid query validation, member-code uniqueness, search/filter/pagination,
+  details/update, audit records/append-only enforcement, status transitions,
+  and unauthorized requests.
+- Complete backend `node --test` in `server/`: passed, 31 tests, 0 failures.
+- Frontend `npm --prefix client run lint`: passed after final changes.
+- Frontend `npm --prefix client run build`: passed after final changes; Vite
+  transformed 2,136 modules and produced the production bundle.
+- React component scan found no hardcoded hex colors or direct white/black/
+  gray/zinc Tailwind color utilities.
+- Browser verification of the M4 list/create/edit/detail/status workflows was
+  attempted with mocked API responses but did not complete reliably; do not
+  treat those UI workflows as browser-verified. Earlier live browser checks
+  displayed a member record that may be test data in the configured development
+  database. It was not changed or removed.
+
+### Pending
+
+- Member-plus-audit persistence is not atomic on the current standalone MongoDB
+  topology; use a replica set and transactions if atomic audit consistency is
+  required.
+- Membership/payment history, plans, subscriptions, trainer assignments and
+  all other non-M4 business modules remain unimplemented.

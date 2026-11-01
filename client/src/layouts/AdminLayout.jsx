@@ -1,6 +1,6 @@
 import { LogOut, Menu, X } from 'lucide-react'
 import { useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '../components/common/Button.jsx'
 import { Sidebar } from '../components/layout/Sidebar.jsx'
 import { useAuth } from '../hooks/useAuth.js'
@@ -20,9 +20,13 @@ function getInitials(name = '') {
 export function AdminLayout() {
   const { admin, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState('')
+  const pageTitle = location.pathname.startsWith('/members')
+    ? 'Members'
+    : 'Dashboard'
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -83,7 +87,7 @@ export function AdminLayout() {
               <div>
                 <p className="text-xs text-text-muted">Admin workspace</p>
                 <h1 className="mt-0.5 truncate text-base font-semibold text-text-primary">
-                  Dashboard
+                  {pageTitle}
                 </h1>
               </div>
             </div>

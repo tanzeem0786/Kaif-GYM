@@ -10,20 +10,24 @@ const variants = {
 
 export function Button({
   children,
+  as: Component = 'button',
   variant = 'primary',
   className = '',
   loading = false,
   disabled = false,
   ...props
 }) {
+  const isButton = Component === 'button'
+
   return (
-    <button
+    <Component
       className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-60 ${variants[variant]} ${className}`}
-      disabled={disabled || loading}
+      disabled={isButton ? disabled || loading : undefined}
+      aria-disabled={!isButton && disabled ? true : undefined}
       {...props}
     >
       {loading && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
       {children}
-    </button>
+    </Component>
   )
 }

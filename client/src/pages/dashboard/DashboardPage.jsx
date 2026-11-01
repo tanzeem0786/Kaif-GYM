@@ -5,14 +5,13 @@ import {
   Check,
   CreditCard,
   Dumbbell,
-  UsersRound,
 } from 'lucide-react'
 import { Badge } from '../../components/common/Badge.jsx'
 import { Card } from '../../components/common/Card.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
+import { Link } from 'react-router-dom'
 
 const futureModules = [
-  { title: 'Members', milestone: 'M4', icon: UsersRound },
   { title: 'Memberships', milestone: 'M5', icon: Dumbbell },
   { title: 'Payments', milestone: 'M7', icon: CreditCard },
 ]
@@ -141,10 +140,12 @@ export function DashboardPage() {
             </Badge>
           </div>
           <div className="mt-4 flex items-center justify-between">
-            <span className="text-sm text-text-secondary">Member management</span>
-            <span className="inline-flex items-center gap-1 text-xs text-text-muted">
-              M4 <ArrowUpRight aria-hidden="true" className="size-3.5" />
-            </span>
+            <Link
+              className="inline-flex items-center gap-1 text-sm text-text-primary hover:text-text-secondary"
+              to="/members"
+            >
+              Member management <ArrowUpRight aria-hidden="true" className="size-3.5" />
+            </Link>
           </div>
         </Card>
       </section>

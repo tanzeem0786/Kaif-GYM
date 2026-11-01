@@ -13,8 +13,8 @@ import { NavLink } from 'react-router-dom'
 import { Brand } from './Brand.jsx'
 
 const navigation = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', active: true },
-  { label: 'Members', icon: UsersRound, milestone: 'M4' },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+  { label: 'Members', icon: UsersRound, path: '/members' },
   { label: 'Memberships', icon: Dumbbell, milestone: 'M5' },
   { label: 'Trainers', icon: UsersRound, milestone: 'M6' },
   { label: 'Payments', icon: CreditCard, milestone: 'M7' },
@@ -36,8 +36,8 @@ export function Sidebar({ onNavigate }) {
         Workspace
       </p>
       <nav aria-label="Main navigation" className="space-y-1">
-        {navigation.map(({ label, icon: Icon, path, active, milestone }) =>
-          active ? (
+        {navigation.map(({ label, icon: Icon, path, milestone }) =>
+          path ? (
             <NavLink
               key={label}
               to={path}

@@ -8,12 +8,16 @@ import { notFound } from './middlewares/notFound.js'
 import { requestLogger } from './middlewares/requestLogger.js'
 import { createApiRouter } from './routes/api.routes.js'
 import { Admin } from './modules/auth/admin.model.js'
+import { Member } from './modules/members/member.model.js'
+import { AuditLog } from './modules/audit/auditLog.model.js'
 
 export function createApp({
   allowedOrigins,
   getDatabaseState,
   authConfig,
   AdminModel = Admin,
+  MemberModel = Member,
+  AuditLogModel = AuditLog,
   loginRateLimit,
   loginWindowMs,
 }) {
@@ -31,6 +35,8 @@ export function createApp({
       getDatabaseState,
       authConfig,
       AdminModel,
+      MemberModel,
+      AuditLogModel,
       loginRateLimit,
       loginWindowMs,
     }),

@@ -4,9 +4,10 @@ Kaif's GYM is a single-branch gym management system for an admin/owner. The
 approved application architecture is a React + Vite frontend and a Node.js +
 Express modular-monolith backend with MongoDB.
 
-The repository has completed M0 through M3. The frontend provides a responsive
-admin sign-in and dashboard foundation integrated with the backend's cookie-based
-authentication. Business management modules are not implemented yet.
+The repository has completed M0 through M4. The frontend provides a responsive
+admin sign-in, member management and dashboard foundation integrated with the
+backend's cookie-based authentication. Membership, trainer, payment and
+commission modules are not implemented yet.
 
 ## Requirements
 
@@ -86,9 +87,53 @@ credentials share a generic response; inactive admins cannot log in or
 continue using a session. Protected admin routes must use the authentication
 middleware.
 
+### Member management API (M4)
+
+All member endpoints require an authenticated admin session cookie. Members
+do not receive login accounts.
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/api/v1/members` | Create a member |
+| `GET` | `/api/v1/members` | Search, filter and paginate members |
+| `GET` | `/api/v1/members/:memberId` | Get member details |
+| `PATCH` | `/api/v1/members/:memberId` | Update profile fields |
+| `PATCH` | `/api/v1/members/:memberId/status` | Set status to `active`, `inactive` or `archived` |
+
+List query parameters: `page` (default 1), `limit` (default 20, maximum 100),
+`search`, `status`, `sortBy` (`registrationDate`, `firstName`, `lastName`,
+`memberCode`, `createdAt`, `updatedAt`) and `sortOrder` (`asc` or `desc`).
+Search covers member code, names, email and phone. List responses include
+pagination metadata.
+
+Member records follow `DATABASE_DESIGN.md`: first/last name, phone, optional
+email, gender, date of birth, address, profile image, emergency contact,
+registration date, status, notes and timestamps. The agreed M4 profile shape
+uses `address: { text }` and an optional `emergencyContact: { name, phone }`.
+Local ten-digit Indian mobile numbers are normalized to `+91`; international
+numbers must include a country code and use E.164 format. Emails are
+lowercased; phone and email are not unique because the approved database
+design only defines `memberCode` uniqueness. Generated member codes use
+`KG-` plus 12 random uppercase hex characters, backed by a unique index and
+collision retry.
+
+Member indexes: unique `memberCode`, non-unique `phone` and `status`.
+Administrative create, update, status and archive actions write append-only
+records to `auditLogs`; audit snapshots contain member code, status and changed
+field names, not profile contact values. Members are deactivated/archived, not
+permanently deleted; related history is not cascaded or removed.
+
+Member updates and their audit records are saved sequentially rather than in a
+multi-document transaction to remain compatible with the project's current
+standalone MongoDB setup. Audit errors are returned rather than swallowed, but
+a database failure between the profile write and audit write can leave a
+completed profile change without its audit record. Use a replica set and a
+transaction if atomic member-plus-audit persistence becomes a deployment
+requirement.
+
 Backend tests use a unique temporary database name derived from
 `MONGODB_TEST_URI` (or a local MongoDB test URI) and drop only that temporary
-database after the auth tests complete. Ensure the test MongoDB account can
+database after tests complete. Ensure the test MongoDB account can
 create and drop databases; the normal `MONGODB_URI` development database is not
 used for auth test data.
 
@@ -135,11 +180,11 @@ files; the root `.gitignore` excludes environment files while allowing
 ```text
 client/
   src/
-    components/       Shared UI and layout components
+    components/       Shared UI, layout and member components
     contexts/         Authentication state provider
     hooks/            Shared React hooks
     layouts/          Authenticated admin shell
-    pages/            Login and dashboard pages
+    pages/            Login, dashboard and member pages
     routes/           Public and protected route guards
     services/         Axios client and API calls
     styles/           Centralized theme tokens
@@ -154,6 +199,8 @@ server/
     middlewares/
     models/
     modules/
+      audit/
+      members/
     routes/
     scripts/
     services/

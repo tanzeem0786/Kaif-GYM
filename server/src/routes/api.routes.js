@@ -2,11 +2,14 @@ import { Router } from 'express'
 import { createHealthRouter } from './health.routes.js'
 import { sendSuccess } from '../utils/ApiResponse.js'
 import { createAuthRouter } from '../modules/auth/auth.routes.js'
+import { createMemberRouter } from '../modules/members/member.routes.js'
 
 export function createApiRouter({
   getDatabaseState,
   authConfig,
   AdminModel,
+  MemberModel,
+  AuditLogModel,
   loginRateLimit,
   loginWindowMs,
 }) {
@@ -20,6 +23,10 @@ export function createApiRouter({
     apiRouter.use(
       '/auth',
       createAuthRouter({ authConfig, AdminModel, loginRateLimit, loginWindowMs }),
+    )
+    apiRouter.use(
+      '/members',
+      createMemberRouter({ authConfig, AdminModel, MemberModel, AuditLogModel }),
     )
   }
 
