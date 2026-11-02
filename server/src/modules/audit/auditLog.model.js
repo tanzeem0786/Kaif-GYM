@@ -5,8 +5,8 @@ export const auditLogSchema = new mongoose.Schema(
     actor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Admin',
-      required: true,
     },
+    actorType: { type: String, enum: ['admin', 'system'], default: 'admin', required: true },
     action: { type: String, required: true, trim: true },
     module: { type: String, required: true, trim: true },
     entityId: { type: mongoose.Schema.Types.ObjectId, required: true },

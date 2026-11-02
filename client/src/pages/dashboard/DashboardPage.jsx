@@ -4,21 +4,43 @@ import {
   CalendarDays,
   Check,
   CreditCard,
-  Dumbbell,
 } from 'lucide-react'
 import { Badge } from '../../components/common/Badge.jsx'
 import { Card } from '../../components/common/Card.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { getMembershipSummary } from '../../services/membershipApi.js'
+import { getApiErrorMessage } from '../../utils/apiError.js'
 
 const futureModules = [
-  { title: 'Memberships', milestone: 'M5', icon: Dumbbell },
   { title: 'Payments', milestone: 'M7', icon: CreditCard },
 ]
 
 export function DashboardPage() {
   const { admin } = useAuth()
   const firstName = admin?.name?.trim().split(/\s+/)[0] || 'Admin'
+  const [membershipSummary, setMembershipSummary] = useState(null)
+  const [summaryError, setSummaryError] = useState('')
+  const [summaryLoading, setSummaryLoading] = useState(true)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    getMembershipSummary({ signal: controller.signal })
+      .then((summary) => {
+        setMembershipSummary(summary)
+        setSummaryError('')
+      })
+      .catch((error) => {
+        if (error.code !== 'ERR_CANCELED') {
+          setSummaryError(getApiErrorMessage(error, 'Could not load membership summary.'))
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setSummaryLoading(false)
+      })
+    return () => controller.abort()
+  }, [])
 
   return (
     <div className="space-y-8">
@@ -35,8 +57,7 @@ export function DashboardPage() {
             Welcome, {firstName}
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
-            Your admin workspace is ready. This overview will grow as the next project milestones
-            are delivered.
+            Your admin workspace is ready. Membership data below reflects saved records.
           </p>
         </div>
         <Badge className="w-fit" variant="success">
@@ -49,14 +70,13 @@ export function DashboardPage() {
         <div className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-center">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.17em] text-text-muted">
-              Foundation complete
+              Membership overview
             </p>
             <h3 className="mt-3 max-w-xl text-2xl font-semibold tracking-tight sm:text-3xl">
-              A clearer view of your gym starts here.
+              Membership records are now connected to your dashboard.
             </h3>
             <p className="mt-3 max-w-xl text-sm leading-6 text-text-secondary">
-              Sign-in and your private admin dashboard are in place. Management features will
-              appear here only when their milestones are ready.
+              Review current membership status and manage the plan catalogue or renewal history.
             </p>
           </div>
           <div className="rounded-2xl border border-border bg-surface-elevated p-5">
@@ -65,13 +85,13 @@ export function DashboardPage() {
                 <Check aria-hidden="true" className="size-5" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-text-primary">Admin access verified</p>
-                <p className="mt-1 text-xs text-text-secondary">Your session is active</p>
+                <p className="text-sm font-semibold text-text-primary">Membership data</p>
+                <p className="mt-1 text-xs text-text-secondary">Live counts from the backend</p>
               </div>
             </div>
             <div className="mt-5 border-t border-border pt-4">
               <p className="text-xs leading-5 text-text-muted">
-                Business data will appear after the corresponding modules are implemented.
+                Payment collection and financial reporting are not included in M5.
               </p>
             </div>
           </div>
@@ -82,13 +102,33 @@ export function DashboardPage() {
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold" id="modules-heading">
-              Coming next
+              Membership overview
             </h3>
-            <p className="mt-1 text-sm text-text-secondary">No business metrics are available yet.</p>
+            <p className="mt-1 text-sm text-text-secondary">Counts are based on saved membership records.</p>
           </div>
-          <span className="hidden text-xs text-text-muted sm:inline">Planned milestones</span>
+          <span className="hidden text-xs text-text-muted sm:inline">Live operational records</span>
         </div>
+        {summaryError && (
+          <p className="mb-4 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
+            {summaryError}
+          </p>
+        )}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {[
+            { title: 'Currently valid memberships', value: membershipSummary?.activeMemberships, path: '/memberships' },
+            { title: 'Expired memberships', value: membershipSummary?.expiredMemberships, path: '/memberships?status=expired' },
+            { title: 'Active plans', value: membershipSummary?.activePlans, path: '/membership-plans?isActive=true' },
+          ].map(({ title, value, path }) => (
+            <Card className="p-5" key={title}>
+              <p className="text-sm text-text-secondary">{title}</p>
+              <p aria-live="polite" className="mt-3 text-3xl font-semibold">
+                {summaryLoading ? '…' : value ?? 'Unavailable'}
+              </p>
+              <Link className="mt-4 inline-flex items-center gap-1 text-sm text-text-primary hover:text-text-secondary" to={path}>
+                View records <ArrowUpRight aria-hidden="true" className="size-3.5" />
+              </Link>
+            </Card>
+          ))}
           {futureModules.map(({ title, milestone, icon: Icon }) => (
             <Card className="p-5" key={title}>
               <div className="flex items-start justify-between gap-3">

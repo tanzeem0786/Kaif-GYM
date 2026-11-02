@@ -1,6 +1,7 @@
 import {
   Bell,
   ChartNoAxesCombined,
+  ClipboardList,
   CreditCard,
   Dumbbell,
   LayoutDashboard,
@@ -15,8 +16,9 @@ import { Brand } from './Brand.jsx'
 const navigation = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Members', icon: UsersRound, path: '/members' },
-  { label: 'Memberships', icon: Dumbbell, milestone: 'M5' },
-  { label: 'Trainers', icon: UsersRound, milestone: 'M6' },
+  { label: 'Memberships', icon: Dumbbell, path: '/memberships' },
+  { label: 'Membership Plans', icon: ClipboardList, path: '/membership-plans' },
+  { label: 'Trainers', icon: UsersRound, path: '/trainers' },
   { label: 'Payments', icon: CreditCard, milestone: 'M7' },
   { label: 'Commissions', icon: Percent, milestone: 'M8' },
   { label: 'Reports', icon: ChartNoAxesCombined, milestone: 'Later' },
