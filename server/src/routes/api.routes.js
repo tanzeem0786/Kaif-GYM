@@ -7,6 +7,8 @@ import {
   createMembershipPlanRouter,
   createMembershipRouter,
 } from '../modules/memberships/membership.routes.js'
+import { createTrainerRouter } from '../modules/trainers/trainer.routes.js'
+import { createAssignmentRouter } from '../modules/assignments/assignment.routes.js'
 
 export function createApiRouter({
   getDatabaseState,
@@ -16,6 +18,8 @@ export function createApiRouter({
   AuditLogModel,
   MembershipModel,
   MembershipPlanModel,
+  TrainerModel,
+  AssignmentModel,
   loginRateLimit,
   loginWindowMs,
 }) {
@@ -44,6 +48,21 @@ export function createApiRouter({
     }
     apiRouter.use('/membership-plans', createMembershipPlanRouter(membershipDependencies))
     apiRouter.use('/memberships', createMembershipRouter(membershipDependencies))
+    apiRouter.use(
+      '/trainers',
+      createTrainerRouter({ authConfig, AdminModel, TrainerModel, AuditLogModel }),
+    )
+    apiRouter.use(
+      '/trainer-assignments',
+      createAssignmentRouter({
+        authConfig,
+        AdminModel,
+        MemberModel,
+        TrainerModel,
+        AssignmentModel,
+        AuditLogModel,
+      }),
+    )
   }
 
   return apiRouter

@@ -4,11 +4,11 @@ Kaif's GYM is a single-branch gym management system for an admin/owner. The
 approved application architecture is a React + Vite frontend and a Node.js +
 Express modular-monolith backend with MongoDB.
 
-The repository has implemented M0 through M5, including admin sign-in, member
-management, membership plans and membership history, integrated with the
-backend's cookie-based authentication. Freeze/unfreeze remains deferred pending
-approved date policies. Trainers, payments, commissions and other later
-modules are not implemented yet.
+The repository has implemented M0 through M6, including admin sign-in, member
+management, membership plans and history, trainer profiles and trainer/member
+assignments, integrated with the backend's cookie-based authentication.
+Freeze/unfreeze remains deferred pending approved date policies. Payments,
+refunds and commissions are not implemented yet.
 
 ## Requirements
 
@@ -194,6 +194,44 @@ project's approved documents leave its start/backdating, partial-day, overlap,
 expired-membership and renewal-during-freeze policies unresolved. Payments,
 refunds, trainer assignments and commission calculations are also out of scope.
 
+## Trainer and trainer assignment API (M6)
+
+All trainer endpoints require the authenticated admin session cookie. Trainer
+profiles can be deactivated but are not permanently deleted. Deactivating a
+trainer does not end existing assignments; an inactive trainer cannot receive
+new assignments.
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/api/v1/trainers` | Create a trainer profile |
+| `GET` | `/api/v1/trainers` | Search, filter and paginate trainers |
+| `GET` | `/api/v1/trainers/:trainerId` | Get trainer details |
+| `PATCH` | `/api/v1/trainers/:trainerId` | Update trainer profile fields |
+| `PATCH` | `/api/v1/trainers/:trainerId/status` | Activate or deactivate a trainer |
+| `POST` | `/api/v1/trainer-assignments` | Assign a trainer to a member |
+| `GET` | `/api/v1/trainer-assignments` | Search, filter and paginate assignments |
+| `GET` | `/api/v1/trainer-assignments/member/:memberId` | Get a member's assignment history |
+| `GET` | `/api/v1/trainer-assignments/trainer/:trainerId` | Get a trainer's assignment history |
+| `GET` | `/api/v1/trainer-assignments/:assignmentId` | Get assignment details |
+| `PATCH` | `/api/v1/trainer-assignments/:assignmentId/end` | End an active assignment |
+
+Trainer profiles include a generated `KGT-` code, names, normalized phone,
+optional email and image URL, specializations, joining date, status and
+administrative notes. Assignment bodies require `memberId`, `trainerId` and
+supporting `proof: { url, fileName }`; proof is an HTTPS reference and display
+filename, not an uploaded file. The assignment start date is an admin-selected
+UTC date, may be past or future, and defaults to today. The end date is
+admin-selected, must be on or after the start date, and is the last active day.
+Multiple independent records for the same member/trainer pair are allowed,
+including concurrent records. Ending an assignment preserves its proof and
+history; no assignment or trainer hard-delete API exists.
+
+Trainer indexes include unique `trainerCode` and `status`. Assignment indexes
+cover member/status, trainer/status and start-date history for each party.
+Trainer and assignment operations write append-only audit events. Record and
+audit writes are sequential for compatibility with standalone MongoDB; they
+are not an atomic multi-document transaction.
+
 ## Frontend setup
 
 In PowerShell, from the repository root:
@@ -232,11 +270,11 @@ files; the root `.gitignore` excludes environment files while allowing
 ```text
 client/
   src/
-    components/       Shared UI, layout and member components
+    components/       Shared UI, layout, member, membership and trainer components
     contexts/         Authentication state provider
     hooks/            Shared React hooks
     layouts/          Authenticated admin shell
-    pages/            Login, dashboard, member, plan and membership pages
+    pages/            Login, dashboard, member, membership and trainer pages
     routes/           Public and protected route guards
     services/         Axios client and API calls
     styles/           Centralized theme tokens
@@ -254,6 +292,9 @@ server/
       audit/
       members/
       memberships/
+      trainers/
+      assignments/
+      trainers/
     routes/
     scripts/
     services/

@@ -12,6 +12,8 @@ import { Member } from './modules/members/member.model.js'
 import { AuditLog } from './modules/audit/auditLog.model.js'
 import { Membership } from './modules/memberships/models/membership.model.js'
 import { MembershipPlan } from './modules/memberships/models/membershipPlan.model.js'
+import { Trainer } from './modules/trainers/trainer.model.js'
+import { TrainerAssignment } from './modules/assignments/assignment.model.js'
 
 export function createApp({
   allowedOrigins,
@@ -22,6 +24,8 @@ export function createApp({
   AuditLogModel = AuditLog,
   MembershipModel = Membership,
   MembershipPlanModel = MembershipPlan,
+  TrainerModel = Trainer,
+  AssignmentModel = TrainerAssignment,
   loginRateLimit,
   loginWindowMs,
 }) {
@@ -43,6 +47,8 @@ export function createApp({
       AuditLogModel,
       MembershipModel,
       MembershipPlanModel,
+      TrainerModel,
+      AssignmentModel,
       loginRateLimit,
       loginWindowMs,
     }),

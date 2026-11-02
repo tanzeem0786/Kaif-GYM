@@ -28,6 +28,8 @@ export function AdminLayout() {
     ? 'Membership Plans'
     : location.pathname.startsWith('/memberships')
       ? 'Memberships'
+      : location.pathname.startsWith('/trainers')
+        ? 'Trainers'
       : location.pathname.startsWith('/members')
         ? 'Members'
         : 'Dashboard'

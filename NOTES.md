@@ -533,6 +533,102 @@ reused. No frontend or unrelated dependencies were added.
   record and audit writes are not atomic; transactions would require a replica
   set or sharded cluster.
 
+## M6 — Trainer Management & Assignments
+
+### Decisions followed
+
+- Supporting proof is recorded as a required HTTPS URL plus a display filename;
+  no upload provider or file-storage dependency was added.
+- Assignment dates are date-only UTC. Admins may choose past or future start
+  dates; an omitted start date defaults to UTC today. An end date is required
+  when ending an assignment, must be on or after its start, and represents the
+  last active day.
+- Concurrent assignment records for a repeated trainer/member pair are allowed.
+  Records are independent and are never overwritten by a later assignment.
+- Inactive trainers cannot receive new assignments. Deactivation does not
+  automatically end or delete existing assignment records.
+
+### Backend implementation
+
+- Added trainer and trainer-assignment Mongoose models. Trainer codes use the
+  generated format `KGT-` plus 12 uppercase random hexadecimal characters.
+  Trainer indexes include unique `trainerCode` and `status`.
+- Assignment records retain member/trainer references, UTC start/end dates,
+  active/ended status, required proof URL/filename, optional notes and
+  timestamps. Indexes cover member/status, trainer/status and date history for
+  both trainer and member.
+- Added Zod body, ID and query validation, E.164 phone normalization reused
+  from member validation, lowercase optional email, and HTTPS validation for
+  proof links.
+- Added admin-protected trainer CRUD/list/status endpoints and assignment
+  create/list/details/history/end endpoints. Search, filters and pagination
+  are supported. Assignment ending uses a conditional update to prevent
+  concurrent duplicate ending; history and proof are retained.
+- Trainer create/update/status and assignment create/end operations write
+  append-only audit logs. Audit snapshots avoid storing trainer contact data,
+  proof URLs and notes. As with M4/M5, domain writes and audit writes are
+  sequential rather than atomic; transactions require a MongoDB replica set or
+  sharded cluster.
+- No trainer authentication, file upload integration, payment, commission,
+  assignment deletion, or automatic assignment termination was added.
+
+### Frontend implementation
+
+- Added a searchable/filterable paginated trainer directory, add/edit form,
+  trainer details, active/inactive badge and status confirmation.
+- Added assignment creation and history to member details, including active
+  trainer selection and required HTTPS proof fields. Trainer details show
+  assignment history and allow an admin to end an active assignment after
+  choosing its last active day.
+- Assignment/status changes include confirmation, loading, empty and API error
+  states. Existing CSS theme custom properties and semantic Tailwind utilities
+  are used throughout; no dependencies or theme colors were added.
+
+### Files created or modified
+
+- Backend: `server/src/modules/trainers/{trainer.model.js,
+  trainer.validation.js, trainer.service.js, trainer.controller.js,
+  trainer.routes.js}`, `server/src/modules/assignments/{assignment.model.js,
+  assignment.validation.js, assignment.service.js, assignment.controller.js,
+  assignment.routes.js}`, `server/src/app.js`,
+  `server/src/routes/api.routes.js`, and `server/tests/trainers.test.js`.
+- Frontend: `client/src/services/trainerApi.js`,
+  `client/src/components/trainers/{TrainerStatusBadge.jsx, TrainerForm.jsx,
+  TrainerAssignmentsPanel.jsx}`, `client/src/pages/trainers/{TrainersPage.jsx,
+  TrainerFormPage.jsx, TrainerDetailsPage.jsx}`, `client/src/App.jsx`,
+  `client/src/components/layout/Sidebar.jsx`,
+  `client/src/layouts/AdminLayout.jsx`, and
+  `client/src/pages/members/MemberDetailsPage.jsx`.
+- Documentation: root `README.md` and `NOTES.md`.
+- No package manifests, dependencies, environment files or business rules
+  outside M6 were changed.
+
+### Verification
+
+- `npm test` from `server/`: passed, 50 tests, 0 failures. M6 tests cover
+  trainer create/read/update, normalized and invalid contact data, search and
+  pagination, protected routes/status transitions, inactive-trainer rejection,
+  preserving existing assignments, assignment proof validation, valid and
+  invalid end dates, duplicate-pair concurrent records, member/trainer history,
+  and audit records.
+- `npm run lint` from `client/`: passed.
+- `npm run build` from `client/`: passed; Vite 8.3.5 transformed 2,152 modules
+  and produced the production bundle.
+- `node --check` over new backend modules/tests: passed.
+- `git diff --check`: passed.
+- Theme scan over new trainer components/pages/services: no hardcoded hex
+  colors or direct white/black/gray/zinc/neutral/stone color utilities found.
+- No dedicated frontend automated test runner was added; the UI has been
+  validated by lint and production build, not by a browser workflow test.
+
+### Pending
+
+- Supporting proof is a required external HTTPS reference; uploading and
+  storing proof files is not implemented because no provider was approved.
+- Audit and domain writes are not atomic on standalone MongoDB. Use a replica
+  set or sharded cluster if atomic persistence is required.
+- Payment, refund and commission functionality remain outside M6.
+
 ### Freeze policy decision
 
 - Freeze/unfreeze UI, APIs and expiry extension were deferred at the user's

@@ -11,6 +11,9 @@ import { MembershipFormPage } from './pages/memberships/MembershipFormPage.jsx'
 import { MembershipPlanFormPage } from './pages/memberships/MembershipPlanFormPage.jsx'
 import { MembershipPlansPage } from './pages/memberships/MembershipPlansPage.jsx'
 import { MembershipsPage } from './pages/memberships/MembershipsPage.jsx'
+import { TrainerDetailsPage } from './pages/trainers/TrainerDetailsPage.jsx'
+import { TrainerFormPage } from './pages/trainers/TrainerFormPage.jsx'
+import { TrainersPage } from './pages/trainers/TrainersPage.jsx'
 import { PublicOnlyRoute } from './routes/PublicOnlyRoute.jsx'
 import { ProtectedRoute } from './routes/ProtectedRoute.jsx'
 
@@ -36,6 +39,10 @@ function App() {
               <Route path="/memberships/new" element={<MembershipFormPage />} />
               <Route path="/memberships/:membershipId/renew" element={<MembershipFormPage />} />
               <Route path="/memberships/:membershipId" element={<MembershipDetailsPage />} />
+              <Route path="/trainers" element={<TrainersPage />} />
+              <Route path="/trainers/new" element={<TrainerFormPage />} />
+              <Route path="/trainers/:trainerId/edit" element={<TrainerFormPage />} />
+              <Route path="/trainers/:trainerId" element={<TrainerDetailsPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
