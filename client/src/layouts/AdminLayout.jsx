@@ -24,12 +24,17 @@ export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState('')
-  const pageTitle = location.pathname.startsWith('/membership-plans')
+  const pageTitle = location.pathname.startsWith('/commission-agreements') ||
+    location.pathname.includes('/commission-agreements')
+    ? 'Commission Agreements'
+    : location.pathname.startsWith('/membership-plans')
     ? 'Membership Plans'
     : location.pathname.startsWith('/memberships')
       ? 'Memberships'
       : location.pathname.startsWith('/trainers')
         ? 'Trainers'
+        : location.pathname.startsWith('/payments')
+          ? 'Payments'
       : location.pathname.startsWith('/members')
         ? 'Members'
         : 'Dashboard'

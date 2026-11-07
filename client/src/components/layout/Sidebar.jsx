@@ -19,7 +19,7 @@ const navigation = [
   { label: 'Memberships', icon: Dumbbell, path: '/memberships' },
   { label: 'Membership Plans', icon: ClipboardList, path: '/membership-plans' },
   { label: 'Trainers', icon: UsersRound, path: '/trainers' },
-  { label: 'Payments', icon: CreditCard, milestone: 'M7' },
+  { label: 'Payments', icon: CreditCard, path: '/payments' },
   { label: 'Commissions', icon: Percent, milestone: 'M8' },
   { label: 'Reports', icon: ChartNoAxesCombined, milestone: 'Later' },
   { label: 'Notifications', icon: Bell, milestone: 'Later' },

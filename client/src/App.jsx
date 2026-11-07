@@ -14,6 +14,12 @@ import { MembershipsPage } from './pages/memberships/MembershipsPage.jsx'
 import { TrainerDetailsPage } from './pages/trainers/TrainerDetailsPage.jsx'
 import { TrainerFormPage } from './pages/trainers/TrainerFormPage.jsx'
 import { TrainersPage } from './pages/trainers/TrainersPage.jsx'
+import { CommissionAgreementDetailsPage } from './pages/trainers/CommissionAgreementDetailsPage.jsx'
+import { CommissionAgreementFormPage } from './pages/trainers/CommissionAgreementFormPage.jsx'
+import { PaymentDetailsPage } from './pages/payments/PaymentDetailsPage.jsx'
+import { PaymentFormPage } from './pages/payments/PaymentFormPage.jsx'
+import { PaymentReceiptPage } from './pages/payments/PaymentReceiptPage.jsx'
+import { PaymentsPage } from './pages/payments/PaymentsPage.jsx'
 import { PublicOnlyRoute } from './routes/PublicOnlyRoute.jsx'
 import { ProtectedRoute } from './routes/ProtectedRoute.jsx'
 
@@ -42,7 +48,19 @@ function App() {
               <Route path="/trainers" element={<TrainersPage />} />
               <Route path="/trainers/new" element={<TrainerFormPage />} />
               <Route path="/trainers/:trainerId/edit" element={<TrainerFormPage />} />
+              <Route
+                path="/trainers/:trainerId/commission-agreements/new"
+                element={<CommissionAgreementFormPage />}
+              />
               <Route path="/trainers/:trainerId" element={<TrainerDetailsPage />} />
+              <Route
+                path="/commission-agreements/:agreementId"
+                element={<CommissionAgreementDetailsPage />}
+              />
+              <Route path="/payments" element={<PaymentsPage />} />
+              <Route path="/payments/new" element={<PaymentFormPage />} />
+              <Route path="/payments/:paymentId/receipt" element={<PaymentReceiptPage />} />
+              <Route path="/payments/:paymentId" element={<PaymentDetailsPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
