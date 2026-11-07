@@ -14,6 +14,8 @@ import { Membership } from './modules/memberships/models/membership.model.js'
 import { MembershipPlan } from './modules/memberships/models/membershipPlan.model.js'
 import { Trainer } from './modules/trainers/trainer.model.js'
 import { TrainerAssignment } from './modules/assignments/assignment.model.js'
+import { Payment } from './modules/payments/payment.model.js'
+import { CommissionAgreement } from './modules/commissions/commissionAgreement.model.js'
 
 export function createApp({
   allowedOrigins,
@@ -26,6 +28,8 @@ export function createApp({
   MembershipPlanModel = MembershipPlan,
   TrainerModel = Trainer,
   AssignmentModel = TrainerAssignment,
+  PaymentModel = Payment,
+  CommissionAgreementModel = CommissionAgreement,
   loginRateLimit,
   loginWindowMs,
 }) {
@@ -49,6 +53,8 @@ export function createApp({
       MembershipPlanModel,
       TrainerModel,
       AssignmentModel,
+      PaymentModel,
+      CommissionAgreementModel,
       loginRateLimit,
       loginWindowMs,
     }),

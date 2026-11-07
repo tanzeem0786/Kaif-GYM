@@ -9,6 +9,8 @@ import {
 } from '../modules/memberships/membership.routes.js'
 import { createTrainerRouter } from '../modules/trainers/trainer.routes.js'
 import { createAssignmentRouter } from '../modules/assignments/assignment.routes.js'
+import { createPaymentRouter } from '../modules/payments/payment.routes.js'
+import { createCommissionAgreementRouter } from '../modules/commissions/commissionAgreement.routes.js'
 
 export function createApiRouter({
   getDatabaseState,
@@ -20,6 +22,8 @@ export function createApiRouter({
   MembershipPlanModel,
   TrainerModel,
   AssignmentModel,
+  PaymentModel,
+  CommissionAgreementModel,
   loginRateLimit,
   loginWindowMs,
 }) {
@@ -60,6 +64,27 @@ export function createApiRouter({
         MemberModel,
         TrainerModel,
         AssignmentModel,
+        AuditLogModel,
+      }),
+    )
+    apiRouter.use(
+      '/payments',
+      createPaymentRouter({
+        authConfig,
+        AdminModel,
+        MemberModel,
+        MembershipModel,
+        PaymentModel,
+        AuditLogModel,
+      }),
+    )
+    apiRouter.use(
+      '/commission-agreements',
+      createCommissionAgreementRouter({
+        authConfig,
+        AdminModel,
+        TrainerModel,
+        CommissionAgreementModel,
         AuditLogModel,
       }),
     )

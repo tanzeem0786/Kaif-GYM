@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, Clock3, Dumbbell, UserRound } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Clock3, CreditCard, Dumbbell, UserRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Button } from '../../components/common/Button.jsx'
@@ -163,8 +163,16 @@ export function MembershipDetailsPage() {
             <div><dt className="text-xs text-text-muted">Outstanding</dt><dd className="mt-1 text-sm">{formatRupeesFromPaise(membership.outstandingBalancePaise)}</dd></div>
           </dl>
           <p className="mt-5 border-t border-border pt-4 text-xs leading-5 text-text-muted">
-            Payment recording and balance updates are not part of M5.
+            Payments and ledger corrections are tracked as separate financial records.
           </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button as={Link} to={`/payments/new?membershipId=${membership._id}`} variant="primary">
+              <CreditCard aria-hidden="true" className="size-4" />Record payment
+            </Button>
+            <Button as={Link} to={`/payments?membershipId=${membership._id}`} variant="secondary">
+              Payment history
+            </Button>
+          </div>
         </Card>
       </div>
       {membership.status === 'frozen' && (

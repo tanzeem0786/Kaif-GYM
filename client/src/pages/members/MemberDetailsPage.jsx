@@ -8,6 +8,7 @@ import { LoadingScreen } from '../../components/common/LoadingScreen.jsx'
 import { ConfirmDialog } from '../../components/members/ConfirmDialog.jsx'
 import { MemberStatusBadge } from '../../components/members/MemberStatusBadge.jsx'
 import { TrainerAssignmentsPanel } from '../../components/trainers/TrainerAssignmentsPanel.jsx'
+import { PaymentHistoryPanel } from '../../components/payments/PaymentHistoryPanel.jsx'
 import { getMember, updateMemberStatus } from '../../services/memberApi.js'
 import { getApiErrorMessage } from '../../utils/apiError.js'
 
@@ -297,6 +298,7 @@ export function MemberDetailsPage() {
       </Card>
 
       <TrainerAssignmentsPanel memberId={member._id} />
+      <PaymentHistoryPanel memberId={member._id} />
 
       {confirmation && (
         <ConfirmDialog

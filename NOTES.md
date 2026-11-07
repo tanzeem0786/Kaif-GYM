@@ -709,3 +709,174 @@ reused. No frontend or unrelated dependencies were added.
 - Payment recording, balance updates from receipts, trainer assignments and
   commission calculations remain later milestones.
 - Frontend workflows passed lint/build but were not browser-verified.
+
+## M7 — Payment Management
+
+### Backend implementation
+
+- Added the append-only-in-practice `Payment` ledger model with unique
+  transaction codes (`KGP-` plus 16 uppercase hexadecimal characters), unique
+  idempotency keys, integer `amountPaise`, member and membership references,
+  Cash/UPI method, UTC payment date, optional UPI reference/notes, admin
+  attribution, status and cumulative reversal amount. Request fingerprints
+  and idempotency keys are not returned by API responses.
+- Added admin-protected payment creation, searchable/filterable/paginated
+  listing, member history, details, receipt data and linked reversal APIs.
+  Payment amount validation requires a positive safe integer in paise and
+  prevents collection beyond the current membership balance.
+- Payment creation updates `amountPaidPaise` and `outstandingBalancePaise`
+  together with the transaction and audit log. Exact retries with the same
+  idempotency key and payload return the existing record; conflicting key
+  reuse is rejected. Unique database indexes and conditional balance updates
+  protect duplicate and over-balance requests.
+- Partial/full reversals are separate linked ledger documents. Multiple
+  partial reversals are supported; cumulative reversal is bounded by the
+  original amount and a fully reversed payment cannot be reversed again.
+  Membership paid/outstanding totals are adjusted after each correction.
+  The original amount and transaction remain intact; its derived reversal
+  amount/status and each correction are auditable.
+- Financial writes and their audit records use MongoDB transactions on
+  replica-set or sharded topologies. Standalone MongoDB uses conditional
+  updates and compensating operations; it cannot provide crash-safe
+  multi-document atomicity. A replica set is required for atomic production
+  payment writes. Transaction execution on a replica-set test topology was not
+  separately verified in this run.
+- No payment gateway, external refund/payout, commission, permanent-delete or
+  payment-edit API was added. Reversals are ledger corrections, not proof of
+  an external payout.
+
+### Frontend implementation
+
+- Added the Payments navigation/page with transaction search, method/status
+  and date filters, pagination, payment details, member history, and a
+  payment form linked to memberships with outstanding balances.
+- Added partial/full reversal entry with a confirmation step, amount boundary
+  checks, and transaction/correction history. Membership and member details
+  link to payment history and recording flows.
+- Added receipt data/API and a print-friendly receipt screen using the browser
+  print function; no PDF package was added. Existing shared components and
+  semantic theme tokens are reused.
+
+### Files created or modified
+
+- Backend created: `server/src/modules/payments/payment.model.js`,
+  `payment.validation.js`, `payment.service.js`, `payment.controller.js`,
+  `payment.routes.js`, and `server/tests/payments.test.js`.
+- Backend modified: `server/src/app.js` and `server/src/routes/api.routes.js`.
+- Frontend created: `client/src/services/paymentApi.js`,
+  `client/src/utils/paymentFormat.js`,
+  `client/src/components/payments/PaymentStatusBadge.jsx`,
+  `PaymentHistoryPanel.jsx`, and
+  `client/src/pages/payments/{PaymentsPage.jsx, PaymentFormPage.jsx,
+  PaymentDetailsPage.jsx, PaymentReceiptPage.jsx}`.
+- Frontend modified: `client/src/App.jsx`,
+  `client/src/components/layout/Sidebar.jsx`,
+  `client/src/layouts/AdminLayout.jsx`,
+  `client/src/pages/members/MemberDetailsPage.jsx`, and
+  `client/src/pages/memberships/MembershipDetailsPage.jsx`.
+- Documentation modified: root `README.md` and `NOTES.md`. No packages,
+  dependencies, real environment files, or unrelated business modules were
+  changed.
+
+### Verification
+
+- `npm test` from `server/`: passed, **56 tests, 0 failures**, including six
+  payment tests covering partial/full collection, safe-paise and method
+  validation, overpayment rejection, idempotent retry/conflicting key use,
+  multiple partial reversals to full reversal, over-reversal rejection,
+  balance reconciliation, payment/member history, details, receipt, audit
+  records and authorization.
+- `npm run lint` from `client/`: passed.
+- `npm run build` from `client/`: passed; Vite 8.3.5 transformed 2,160 modules.
+- `node --check` over new payment source and tests: passed.
+- `git diff --check`: passed.
+- Theme scan of payment UI: no hardcoded hex colors or direct
+  white/black/gray/zinc/neutral/stone color utilities found.
+- No browser-based UI flow was run. The payment tests connected to a standalone
+  MongoDB topology (`Single`) and exercised the conditional fallback;
+  replica-set/sharded transaction execution was not independently verified.
+
+### Pending
+
+- Configure a replica set (including single-node replica set) or sharded
+  cluster in any environment requiring atomic payment, balance and audit
+  operations.
+- Receipts use browser printing; PDF generation and external delivery are not
+  implemented.
+- Reversals adjust the internal ledger only. External cash/UPI payouts and M8
+  commission calculations remain out of scope.
+
+## M8 — Commission Management Engine (Phase 1: Agreement Management)
+
+### Implemented
+
+- Added the admin-protected commission agreement API:
+  - `POST /api/v1/commission-agreements/trainers/:trainerId` appends the next
+    version for that trainer.
+  - `GET /api/v1/commission-agreements/trainers/:trainerId` returns that
+    trainer's version history with pagination.
+  - `GET /api/v1/commission-agreements/:agreementId` returns agreement details
+    with trainer identity.
+- Agreement versions capture only the trainer, monotonically increasing
+  per-trainer version number, approved commission basis (`membership_fee` or
+  `received_payment`), and effective-from/effective-to dates. Effective-to is
+  optional; end dates preceding start dates are rejected.
+- Agreement terms and versions are immutable. There are no update/delete
+  endpoints; a change is submitted as a new version. A unique trainer/version
+  index prevents duplicate versions, including concurrent creation conflicts.
+- Agreement creation writes an append-only audit record under the
+  `commissions` module. Trainer references and agreement IDs are validated;
+  unknown trainers/agreements return 404.
+- Added a paginated agreement history panel to trainer details, a version
+  creation form, and a version details page using semantic theme tokens.
+- No dependencies were added. No calculations, commission type/value, custom
+  unit/formula, adjustments, statements, or payouts were implemented.
+
+### Files created or modified
+
+- Backend created:
+  `server/src/modules/commissions/commissionAgreement.model.js`,
+  `commissionAgreement.validation.js`, `commissionAgreement.service.js`,
+  `commissionAgreement.controller.js`, `commissionAgreement.routes.js`, and
+  `server/tests/commissionAgreements.test.js`.
+- Backend modified: `server/src/app.js` and
+  `server/src/routes/api.routes.js`.
+- Frontend created:
+  `client/src/services/commissionAgreementApi.js`,
+  `client/src/utils/commissionAgreementFormat.js`,
+  `client/src/components/trainers/TrainerCommissionAgreementsPanel.jsx`,
+  `client/src/pages/trainers/CommissionAgreementFormPage.jsx`, and
+  `CommissionAgreementDetailsPage.jsx`.
+- Frontend modified: `client/src/App.jsx`,
+  `client/src/layouts/AdminLayout.jsx`, and
+  `client/src/pages/trainers/TrainerDetailsPage.jsx`.
+- Documentation modified: root `README.md` and this `NOTES.md`.
+
+### Verification
+
+- `npm test` in `server/`: passed, **60 tests, 0 failures**, including four
+  agreement tests for version creation and history, per-trainer version
+  independence, date/basis/extra-field validation, missing trainers, details,
+  admin authorization, append-only mutation prevention, audit logging, and
+  pagination.
+- `npm run lint` in `client/`: passed.
+- `npm run build` in `client/`: passed; Vite 8.3.5 transformed 2,165 modules.
+- `node --check` over agreement backend source and tests: passed.
+- `git diff --check`: passed.
+- Theme scan of new agreement UI found no hardcoded hex colors or direct
+  white/black/gray/zinc/neutral/stone color utilities.
+- No browser-driven UI workflow was run.
+
+### Pending decisions and limitations
+
+- Rate/type/custom-unit/formula fields remain excluded because the custom
+  commission formula and unit are not approved.
+- Partial-payment commission timing remains pending; no calculation path was
+  added.
+- Effective-date overlap precedence is not imposed or inferred. It must be
+  decided before commission calculations are implemented.
+- Agreement dates are stored as UTC calendar-day boundaries. Agreement
+  creation and its audit write follow the repository's existing sequential
+  persistence pattern; multi-document atomicity was not added in this phase.
+- Commission schedules remain manual. Statements, entries, adjustments and
+  payouts are not implemented.

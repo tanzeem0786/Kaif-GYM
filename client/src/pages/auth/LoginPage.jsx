@@ -43,7 +43,7 @@ export function LoginPage() {
 
   return (
     <main className="min-h-screen bg-bg text-text-primary">
-      <div className="mx-auto grid min-h-screen max-w-[1440px] lg:grid-cols-[1fr_0.9fr]">
+      <div className="mx-auto grid min-h-screen max-w-360 lg:grid-cols-[1fr_0.9fr]">
         <section className="flex min-h-screen flex-col px-6 py-7 sm:px-10 lg:px-16">
           <Brand />
           <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-16">
@@ -93,7 +93,7 @@ export function LoginPage() {
                   <button
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     aria-pressed={showPassword}
-                    className="absolute right-2 top-1 flex size-10 items-center justify-center rounded-lg text-text-muted transition hover:bg-hover hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus"
+                    className="absolute right-2 top-1 flex size-10 items-center justify-center rounded-lg text-text-muted transition hover:bg-hover hover:text-text-primary focus-visible:outline-2 focus-visible:outline-focus"
                     onClick={() => setShowPassword((visible) => !visible)}
                     type="button"
                   >
@@ -129,8 +129,8 @@ export function LoginPage() {
         </section>
 
         <aside className="relative hidden overflow-hidden border-l border-border bg-surface px-12 py-10 lg:flex lg:flex-col lg:justify-between xl:px-16">
-          <div className="pointer-events-none absolute -right-36 -top-32 size-[520px] rounded-full border border-border/70" />
-          <div className="pointer-events-none absolute -right-16 -top-12 size-[360px] rounded-full border border-border/70" />
+          <div className="pointer-events-none absolute -right-36 -top-32 size-130 rounded-full border border-border/70" />
+          <div className="pointer-events-none absolute -right-16 -top-12 size-90 rounded-full border border-border/70" />
           <div className="relative flex justify-end">
             <Badge variant="neutral">OWNER PORTAL</Badge>
           </div>

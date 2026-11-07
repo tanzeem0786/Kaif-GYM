@@ -7,6 +7,7 @@ import { Card } from '../../components/common/Card.jsx'
 import { LoadingScreen } from '../../components/common/LoadingScreen.jsx'
 import { ConfirmDialog } from '../../components/members/ConfirmDialog.jsx'
 import { TrainerAssignmentsPanel } from '../../components/trainers/TrainerAssignmentsPanel.jsx'
+import { TrainerCommissionAgreementsPanel } from '../../components/trainers/TrainerCommissionAgreementsPanel.jsx'
 import { TrainerStatusBadge } from '../../components/trainers/TrainerStatusBadge.jsx'
 import { getTrainer, updateTrainerStatus } from '../../services/trainerApi.js'
 import { getApiErrorMessage } from '../../utils/apiError.js'
@@ -123,6 +124,7 @@ export function TrainerDetailsPage() {
       </div>
 
       <TrainerAssignmentsPanel trainerId={trainerId} />
+      <TrainerCommissionAgreementsPanel trainerId={trainerId} />
 
       {confirmation && (
         <ConfirmDialog

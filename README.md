@@ -4,11 +4,12 @@ Kaif's GYM is a single-branch gym management system for an admin/owner. The
 approved application architecture is a React + Vite frontend and a Node.js +
 Express modular-monolith backend with MongoDB.
 
-The repository has implemented M0 through M6, including admin sign-in, member
-management, membership plans and history, trainer profiles and trainer/member
-assignments, integrated with the backend's cookie-based authentication.
-Freeze/unfreeze remains deferred pending approved date policies. Payments,
-refunds and commissions are not implemented yet.
+The repository has implemented M0 through M7 and M8 Phase 1, including admin
+sign-in, member management, membership plans and history, trainer profiles and
+assignments, payment ledger management, and versioned trainer commission
+agreements. Freeze/unfreeze remains deferred pending approved date policies.
+Commission calculations, adjustments, statements and payouts are not
+implemented.
 
 ## Requirements
 
@@ -232,6 +233,65 @@ Trainer and assignment operations write append-only audit events. Record and
 audit writes are sequential for compatibility with standalone MongoDB; they
 are not an atomic multi-document transaction.
 
+## Payment management API (M7)
+
+All payment endpoints require an authenticated admin session. Payments apply
+to a membership and are recorded as positive integer paise. Cash and UPI are
+supported; payment amounts cannot exceed the current outstanding membership
+balance. A required idempotency key prevents duplicate request processing.
+An exact retry returns the saved transaction; reusing the key with a different
+request is rejected.
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/api/v1/payments` | Record a full or partial payment |
+| `GET` | `/api/v1/payments` | Search, filter and paginate payment/correction records |
+| `GET` | `/api/v1/payments/member/:memberId` | View member payment history |
+| `GET` | `/api/v1/payments/:paymentId` | View transaction details and linked reversals |
+| `GET` | `/api/v1/payments/:paymentId/receipt` | Get printable receipt data |
+| `POST` | `/api/v1/payments/:paymentId/reversals` | Record a partial or full ledger reversal |
+
+Payment requests use `membershipId`, `amountPaise`, `paymentMethod` (`cash` or
+`upi`), `idempotencyKey`, and optional UTC `paymentDate`, UPI `referenceNumber`
+and notes. Reversal requests require `amountPaise` and a distinct
+`idempotencyKey`. Each reversal is a separate linked record. Reversals can be
+split into multiple corrections, but their cumulative value cannot exceed the
+original payment. A fully reversed payment cannot be reversed again. These
+records correct the gym's ledger and membership balance; they do not initiate
+or represent external cash/UPI payouts.
+
+Payment list filters include `memberId`, `membershipId`, `paymentMethod`,
+`status`, `type`, `fromDate`, `toDate` and `search`, plus standard pagination
+and sorting. Receipt data is rendered in a print-friendly frontend receipt
+screen; no PDF generation dependency is used.
+
+Payment and membership balance/audit operations use a MongoDB transaction when
+connected to a replica set or sharded cluster. Standalone MongoDB does not
+support multi-document transactions; on standalone, conditional balance
+updates and compensating operations are used, so a process or database failure
+mid-operation cannot provide the same atomicity. Use a replica set for
+production financial writes requiring atomic transaction guarantees.
+
+## Commission agreement management API (M8 Phase 1)
+
+All commission agreement endpoints require an authenticated admin session.
+Agreements are individual to each trainer. Creating a version appends a new
+immutable record; prior versions are not edited or deleted. This phase records
+only the approved commission basis (`membership_fee` or `received_payment`)
+and effective dates (`YYYY-MM-DD`). An omitted `effectiveTo` means no end date
+is recorded.
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/api/v1/commission-agreements/trainers/:trainerId` | Create the next agreement version for a trainer |
+| `GET` | `/api/v1/commission-agreements/trainers/:trainerId` | List a trainer's agreement history with pagination |
+| `GET` | `/api/v1/commission-agreements/:agreementId` | View agreement details |
+
+Rates, commission types/units, custom formulas, calculation timing, statements,
+adjustments and payouts are intentionally not captured or calculated until
+their pending business rules are approved. Effective-date overlap precedence
+is also not resolved in this phase.
+
 ## Frontend setup
 
 In PowerShell, from the repository root:
@@ -270,11 +330,11 @@ files; the root `.gitignore` excludes environment files while allowing
 ```text
 client/
   src/
-    components/       Shared UI, layout, member, membership and trainer components
+    components/       Shared UI, layout, member, membership, trainer, payment and agreement components
     contexts/         Authentication state provider
     hooks/            Shared React hooks
     layouts/          Authenticated admin shell
-    pages/            Login, dashboard, member, membership and trainer pages
+    pages/            Login, dashboard, member, membership, trainer, payment and agreement pages
     routes/           Public and protected route guards
     services/         Axios client and API calls
     styles/           Centralized theme tokens
@@ -294,7 +354,7 @@ server/
       memberships/
       trainers/
       assignments/
-      trainers/
+      payments/
     routes/
     scripts/
     services/
