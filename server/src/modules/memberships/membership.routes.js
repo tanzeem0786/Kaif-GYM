@@ -1,8 +1,10 @@
 import { Router } from 'express'
-import { createAuthenticate } from '../auth/auth.middleware.js'
-import { createAuthService } from '../auth/auth.service.js'
-import { ApiError } from '../../utils/ApiError.js'
-import { createMembershipController } from './membership.controller.js'
+import { membershipController } from './membership.controller.js'
+import {
+  validateBody,
+  validateParams,
+  validateQuery,
+} from '../../middlewares/requestValidation.js'
 import {
   createMembershipSchema,
   createPlanSchema,
@@ -14,97 +16,53 @@ import {
   planStatusSchema,
   renewMembershipSchema,
   updatePlanSchema,
-  validateBody,
-  validateParams,
-  validateQuery,
 } from './membership.validation.js'
 
-function createRouters({
-  authConfig,
-  AdminModel,
-  MemberModel,
-  MembershipModel,
-  MembershipPlanModel,
-  AuditLogModel,
-}) {
-  if (
-    !authConfig ||
-    !AdminModel ||
-    !MemberModel ||
-    !MembershipModel ||
-    !MembershipPlanModel ||
-    !AuditLogModel
-  ) {
-    throw new ApiError(500, 'Membership routes are not configured')
-  }
-  const authService = createAuthService({
-    AdminModel,
-    jwtSecret: authConfig.JWT_SECRET,
-    jwtExpiresIn: authConfig.JWT_EXPIRES_IN,
-  })
-  const authenticate = createAuthenticate({
-    AdminModel,
-    authService,
-    cookieName: authConfig.COOKIE_NAME,
-  })
-  const controller = createMembershipController({
-    MemberModel,
-    MembershipModel,
-    MembershipPlanModel,
-    AuditLogModel,
-  })
-
-  const planRouter = Router()
-  planRouter.use(authenticate)
-  planRouter
+export function createMembershipPlanRouter() {
+  const router = Router()
+  router
     .route('/')
-    .get(validateQuery(planListQuerySchema), controller.listPlans)
-    .post(validateBody(createPlanSchema), controller.createPlan)
-  planRouter
+    .get(validateQuery(planListQuerySchema), membershipController.listPlans)
+    .post(validateBody(createPlanSchema), membershipController.createPlan)
+  router
     .route('/:planId')
-    .get(validateParams(planIdParamsSchema), controller.getPlan)
+    .get(validateParams(planIdParamsSchema), membershipController.getPlan)
     .patch(
       validateParams(planIdParamsSchema),
       validateBody(updatePlanSchema),
-      controller.updatePlan,
+      membershipController.updatePlan,
     )
-  planRouter.patch(
+  router.patch(
     '/:planId/status',
     validateParams(planIdParamsSchema),
     validateBody(planStatusSchema),
-    controller.setPlanStatus,
+    membershipController.setPlanStatus,
   )
+  return router
+}
 
-  const membershipRouter = Router()
-  membershipRouter.use(authenticate)
-  membershipRouter.get('/summary', controller.summary)
-  membershipRouter.get(
+export function createMembershipRouter() {
+  const router = Router()
+  router.get('/summary', membershipController.summary)
+  router.get(
     '/member/:memberId',
     validateParams(memberIdParamsSchema),
-    controller.listByMember,
+    membershipController.listByMember,
   )
-  membershipRouter
+  router
     .route('/')
-    .get(validateQuery(membershipListQuerySchema), controller.list)
-    .post(validateBody(createMembershipSchema), controller.create)
-  membershipRouter.post(
+    .get(validateQuery(membershipListQuerySchema), membershipController.list)
+    .post(validateBody(createMembershipSchema), membershipController.create)
+  router.post(
     '/:membershipId/renew',
     validateParams(membershipIdParamsSchema),
     validateBody(renewMembershipSchema),
-    controller.renew,
+    membershipController.renew,
   )
-  membershipRouter.get(
+  router.get(
     '/:membershipId',
     validateParams(membershipIdParamsSchema),
-    controller.getById,
+    membershipController.getById,
   )
-  return { planRouter, membershipRouter }
-}
-
-export function createMembershipPlanRouter(dependencies) {
-  return createRouters(dependencies).planRouter
-}
-
-export function createMembershipRouter(dependencies) {
-  return createRouters(dependencies).membershipRouter
+  return router
 }

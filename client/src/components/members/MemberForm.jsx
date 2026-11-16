@@ -5,8 +5,8 @@ import { TextField } from '../common/TextField.jsx'
 import { memberToFormValues } from '../../utils/memberForm.js'
 
 const emptyValues = {
-  firstName: '',
-  lastName: '',
+  fullName: '',
+  fatherName: '',
   phone: '',
   email: '',
   gender: '',
@@ -32,8 +32,8 @@ export function MemberForm({ member, submitting, errors = {}, onCancel, onSubmit
     const emergencyName = values.emergencyName.trim()
     const emergencyPhone = values.emergencyPhone.trim()
     const payload = {
-      firstName: values.firstName.trim(),
-      lastName: values.lastName.trim(),
+      fullName: values.fullName.trim(),
+      fatherName: values.fatherName.trim(),
       phone: values.phone.trim(),
       email: values.email.trim() || null,
       gender: values.gender.trim() || null,
@@ -60,24 +60,23 @@ export function MemberForm({ member, submitting, errors = {}, onCancel, onSubmit
         </div>
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
           <TextField
-            autoComplete="given-name"
-            error={errors.firstName}
-            id="firstName"
-            label="First name"
+            autoComplete="name"
+            error={errors.fullName}
+            id="fullName"
+            label="Full name"
             maxLength={100}
-            onChange={setField('firstName')}
+            onChange={setField('fullName')}
             required
-            value={values.firstName}
+            value={values.fullName}
           />
           <TextField
-            autoComplete="family-name"
-            error={errors.lastName}
-            id="lastName"
-            label="Last name"
+            error={errors.fatherName}
+            id="fatherName"
+            label="Father's name"
             maxLength={100}
-            onChange={setField('lastName')}
+            onChange={setField('fatherName')}
             required
-            value={values.lastName}
+            value={values.fatherName}
           />
           <TextField
             autoComplete="tel"

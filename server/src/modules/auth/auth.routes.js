@@ -1,23 +1,18 @@
 import { Router } from 'express'
 import { rateLimit } from 'express-rate-limit'
 import { ApiError } from '../../utils/ApiError.js'
+import { validateBody } from '../../middlewares/requestValidation.js'
 import { createAuthController } from './auth.controller.js'
-import { createAuthenticate } from './auth.middleware.js'
-import { loginSchema, validateBody } from './auth.validation.js'
+import { loginSchema } from './auth.validation.js'
 
 export function createAuthRouter({
   authConfig,
-  AdminModel,
+  authenticate,
   loginRateLimit = 5,
   loginWindowMs = 15 * 60 * 1000,
 }) {
   const router = Router()
-  const controller = createAuthController({ AdminModel, authConfig })
-  const authenticate = createAuthenticate({
-    AdminModel,
-    authService: controller.authService,
-    cookieName: authConfig.COOKIE_NAME,
-  })
+  const controller = createAuthController(authConfig)
   const loginLimiter = rateLimit({
     windowMs: loginWindowMs,
     limit: loginRateLimit,

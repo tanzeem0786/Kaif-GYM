@@ -1,4 +1,4 @@
-# SYSTEM ARCHITECTURE — KAIF'S GYM
+# SYSTEM ARCHITECTURE — Barbell Arena
 
 **Version:** 1.0  
 **Status:** Technical Draft  
@@ -12,7 +12,7 @@
 
 # 1. ARCHITECTURE OVERVIEW
 
-Kaif's GYM will follow a Modular Monolith architecture.
+Barbell Arena will follow a Modular Monolith architecture.
 
 The application will contain logically separated modules inside a single backend application.
 
@@ -904,7 +904,7 @@ Do not build future modules prematurely.
 
 ## FINAL ARCHITECTURAL PRINCIPLE
 
-Build Kaif's GYM using a clean, modular and secure architecture.
+Build Barbell Arena using a clean, modular and secure architecture.
 
 Prefer simplicity over unnecessary abstraction.
 
@@ -916,7 +916,7 @@ Every module must follow the approved project requirements.
 
 ---
 
-**Project:** Kaif's GYM  
+**Project:** Barbell Arena  
 **Document:** SYSTEM_ARCHITECTURE.md  
 **Version:** 1.0  
 **Status:** Technical Draft

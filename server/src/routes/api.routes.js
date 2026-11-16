@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { createHealthRouter } from './health.routes.js'
 import { sendSuccess } from '../utils/ApiResponse.js'
+import { createAuthenticate } from '../modules/auth/auth.middleware.js'
 import { createAuthRouter } from '../modules/auth/auth.routes.js'
 import { createMemberRouter } from '../modules/members/member.routes.js'
 import {
@@ -9,85 +10,50 @@ import {
 } from '../modules/memberships/membership.routes.js'
 import { createTrainerRouter } from '../modules/trainers/trainer.routes.js'
 import { createAssignmentRouter } from '../modules/assignments/assignment.routes.js'
-import { createPaymentRouter } from '../modules/payments/payment.routes.js'
+import { paymentRouter } from '../modules/payments/payment.routes.js'
 import { createCommissionAgreementRouter } from '../modules/commissions/commissionAgreement.routes.js'
 
 export function createApiRouter({
   getDatabaseState,
   authConfig,
-  AdminModel,
-  MemberModel,
-  AuditLogModel,
-  MembershipModel,
-  MembershipPlanModel,
-  TrainerModel,
-  AssignmentModel,
-  PaymentModel,
-  CommissionAgreementModel,
   loginRateLimit,
   loginWindowMs,
 }) {
   const apiRouter = Router()
 
   apiRouter.get('/', (req, res) => {
-    sendSuccess(res, { apiVersion: 'v1' }, "Kaif's GYM API is available")
+    sendSuccess(res, { apiVersion: 'v1' }, "Barbell Arena API is available")
   })
   apiRouter.use('/health', createHealthRouter(getDatabaseState))
   if (authConfig) {
+    const authenticate = createAuthenticate({
+      cookieName: authConfig.COOKIE_NAME,
+      jwtSecret: authConfig.JWT_SECRET,
+    })
+
     apiRouter.use(
       '/auth',
-      createAuthRouter({ authConfig, AdminModel, loginRateLimit, loginWindowMs }),
+      createAuthRouter({ authConfig, authenticate, loginRateLimit, loginWindowMs }),
     )
     apiRouter.use(
       '/members',
-      createMemberRouter({ authConfig, AdminModel, MemberModel, AuditLogModel }),
+      authenticate,
+      createMemberRouter(),
     )
-    const membershipDependencies = {
-      authConfig,
-      AdminModel,
-      MemberModel,
-      MembershipModel,
-      MembershipPlanModel,
-      AuditLogModel,
-    }
-    apiRouter.use('/membership-plans', createMembershipPlanRouter(membershipDependencies))
-    apiRouter.use('/memberships', createMembershipRouter(membershipDependencies))
+    apiRouter.use(
+      '/membership-plans',
+      authenticate,
+      createMembershipPlanRouter(),
+    )
+    apiRouter.use('/memberships', authenticate, createMembershipRouter())
     apiRouter.use(
       '/trainers',
-      createTrainerRouter({ authConfig, AdminModel, TrainerModel, AuditLogModel }),
+      authenticate,
+      createTrainerRouter(),
     )
-    apiRouter.use(
-      '/trainer-assignments',
-      createAssignmentRouter({
-        authConfig,
-        AdminModel,
-        MemberModel,
-        TrainerModel,
-        AssignmentModel,
-        AuditLogModel,
-      }),
-    )
-    apiRouter.use(
-      '/payments',
-      createPaymentRouter({
-        authConfig,
-        AdminModel,
-        MemberModel,
-        MembershipModel,
-        PaymentModel,
-        AuditLogModel,
-      }),
-    )
-    apiRouter.use(
-      '/commission-agreements',
-      createCommissionAgreementRouter({
-        authConfig,
-        AdminModel,
-        TrainerModel,
-        CommissionAgreementModel,
-        AuditLogModel,
-      }),
-    )
+    apiRouter.use('/trainer-assignments', authenticate, createAssignmentRouter())
+    apiRouter.use('/payments', authenticate, paymentRouter)
+    apiRouter.use('/commission-agreements', authenticate, createCommissionAgreementRouter())
   }
 
   return apiRouter

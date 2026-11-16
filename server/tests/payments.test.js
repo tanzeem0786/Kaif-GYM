@@ -32,12 +32,6 @@ function createTestApp() {
     allowedOrigins: ['http://localhost:5173'],
     getDatabaseState: () => 'connected',
     authConfig,
-    AdminModel: Admin,
-    MemberModel: Member,
-    MembershipModel: Membership,
-    MembershipPlanModel: MembershipPlan,
-    PaymentModel: Payment,
-    AuditLogModel: AuditLog,
   })
 }
 
@@ -75,9 +69,9 @@ function jsonHeaders(cookie) {
 
 async function createBillingRecords() {
   const member = await Member.create({
-    memberCode: `KG-${randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase()}`,
-    firstName: 'Amina',
-    lastName: 'Rahman',
+    memberCode: 'BA0001',
+    fullName: 'Amina Rahman',
+    fatherName: 'Nadeem Rahman',
     phone: '+919876543210',
   })
   const plan = await MembershipPlan.create({
@@ -87,7 +81,7 @@ async function createBillingRecords() {
     isActive: true,
   })
   const membership = await Membership.create({
-    membershipCode: `KGM-${randomUUID().replaceAll('-', '').slice(0, 16).toUpperCase()}`,
+    membershipCode: `BAM-${randomUUID().replaceAll('-', '').slice(0, 16).toUpperCase()}`,
     member: member._id,
     plan: plan._id,
     planSnapshot: {
@@ -149,7 +143,7 @@ before(async () => {
     Payment.init(),
     AuditLog.init(),
   ])
-  await bootstrapAdmin(adminCredentials, Admin)
+  await bootstrapAdmin(adminCredentials)
   admin = await Admin.findOne({ email: adminCredentials.email })
 })
 
@@ -177,7 +171,7 @@ test('records partial and full payments and reconciles membership balances', asy
     const partialResponse = await recordPayment(baseUrl, cookie, membership.id)
     const partial = (await partialResponse.json()).data.payment
     assert.equal(partialResponse.status, 201)
-    assert.match(partial.transactionCode, /^KGP-[A-F0-9]{16}$/)
+    assert.match(partial.transactionCode, /^BAP-[A-F0-9]{16}$/)
     assert.equal(partial.amountPaise, 40000)
     assert.equal(partial.paymentMethod, 'upi')
 
@@ -219,6 +213,32 @@ test('validates payment method, positive integer-paise amounts, and outstanding 
   })
 })
 
+test('restores the membership balance when payment persistence fails', async () => {
+  await withServer(createTestApp(), async (baseUrl) => {
+    const cookie = await login(baseUrl)
+    const { membership } = await createBillingRecords()
+    const originalSave = Payment.prototype.save
+    Payment.prototype.save = async function (...args) {
+      if (this.type === 'payment') throw new Error('forced payment save failure')
+      return originalSave.apply(this, args)
+    }
+
+    let response
+    try {
+      response = await recordPayment(baseUrl, cookie, membership.id)
+    } finally {
+      Payment.prototype.save = originalSave
+    }
+
+    assert.equal(response.status, 500)
+    const updated = await Membership.findById(membership._id).lean()
+    assert.equal(updated.amountPaidPaise, 0)
+    assert.equal(updated.outstandingBalancePaise, totalFeePaise)
+    assert.equal(await Payment.countDocuments(), 0)
+    assert.equal(await AuditLog.countDocuments({ module: 'payments' }), 0)
+  })
+})
+
 test('idempotent retry returns the original payment and conflicting reuse is rejected', async () => {
   await withServer(createTestApp(), async (baseUrl) => {
     const cookie = await login(baseUrl)
@@ -255,6 +275,15 @@ test('partial reversals may accumulate to a full reversal and preserve linked hi
     assert.equal(firstResponse.status, 201)
     assert.equal(first.type, 'reversal')
     assert.equal(first.reversalOf, payment._id)
+    const correctionReceiptResponse = await fetch(
+      `${baseUrl}/api/v1/payments/${first._id}/receipt`,
+      { headers: { Cookie: cookie } },
+    )
+    const correctionReceipt = await correctionReceiptResponse.json()
+    assert.equal(correctionReceiptResponse.status, 200)
+    assert.equal(correctionReceipt.data.payment._id, payment._id)
+    assert.equal(correctionReceipt.data.requestedCorrection._id, first._id)
+    assert.equal(correctionReceipt.data.reversals.length, 1)
     let updated = await Membership.findById(membership._id).lean()
     assert.equal(updated.amountPaidPaise, 30000)
     assert.equal(updated.outstandingBalancePaise, totalFeePaise - 30000)
@@ -316,6 +345,36 @@ test('reversal cannot exceed remaining amount and duplicate corrections are idem
   })
 })
 
+test('restores payment and balance when reversal persistence fails', async () => {
+  await withServer(createTestApp(), async (baseUrl) => {
+    const cookie = await login(baseUrl)
+    const { membership } = await createBillingRecords()
+    const payment = (await (await recordPayment(baseUrl, cookie, membership.id)).json()).data.payment
+    const originalSave = Payment.prototype.save
+    Payment.prototype.save = async function (...args) {
+      if (this.type === 'reversal') throw new Error('forced reversal save failure')
+      return originalSave.apply(this, args)
+    }
+
+    let response
+    try {
+      response = await reversePayment(baseUrl, cookie, payment._id)
+    } finally {
+      Payment.prototype.save = originalSave
+    }
+
+    assert.equal(response.status, 500)
+    const original = await Payment.findById(payment._id).lean()
+    assert.equal(original.status, 'completed')
+    assert.equal(original.reversedAmountPaise, 0)
+    const updated = await Membership.findById(membership._id).lean()
+    assert.equal(updated.amountPaidPaise, 40000)
+    assert.equal(updated.outstandingBalancePaise, totalFeePaise - 40000)
+    assert.equal(await Payment.countDocuments({ reversalOf: payment._id }), 0)
+    assert.equal(await AuditLog.countDocuments({ action: 'payment.reversed' }), 0)
+  })
+})
+
 test('payment listing, member history, details, receipt and authorization are protected', async () => {
   await withServer(createTestApp(), async (baseUrl) => {
     const cookie = await login(baseUrl)
@@ -323,12 +382,14 @@ test('payment listing, member history, details, receipt and authorization are pr
     const payment = (await (await recordPayment(baseUrl, cookie, membership.id)).json()).data.payment
 
     const listResponse = await fetch(
-      `${baseUrl}/api/v1/payments?paymentMethod=upi&fromDate=2026-01-15&toDate=2026-01-15&search=${payment.transactionCode}`,
+      `${baseUrl}/api/v1/payments?paymentMethod=upi&fromDate=2026-01-15&toDate=2026-01-15&search=Nadeem`,
       { headers: { Cookie: cookie } },
     )
     const listed = await listResponse.json()
     assert.equal(listResponse.status, 200)
     assert.equal(listed.data.payments.length, 1)
+    assert.equal(listed.data.payments[0].member.fullName, 'Amina Rahman')
+    assert.equal(listed.data.payments[0].member.fatherName, 'Nadeem Rahman')
 
     const historyResponse = await fetch(
       `${baseUrl}/api/v1/payments/member/${member.id}`,
@@ -339,6 +400,8 @@ test('payment listing, member history, details, receipt and authorization are pr
       headers: { Cookie: cookie },
     })
     assert.equal(detailsResponse.status, 200)
+    const detailsBody = await detailsResponse.json()
+    assert.equal(detailsBody.data.payment.member.fullName, 'Amina Rahman')
     const updateResponse = await fetch(`${baseUrl}/api/v1/payments/${payment._id}`, {
       method: 'PATCH',
       headers: jsonHeaders(cookie),

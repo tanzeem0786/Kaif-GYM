@@ -1,4 +1,4 @@
-# IMPLEMENTATION ROADMAP — KAIF'S GYM
+# IMPLEMENTATION ROADMAP — Barbell Arena
 
 **Version:** 1.0  
 **Status:** Approved Planning Draft  
@@ -9,7 +9,7 @@
 
 # 1. DEVELOPMENT OBJECTIVE
 
-Implement Kaif's GYM according to the approved project requirements, database design and system architecture.
+Implement Barbell Arena according to the approved project requirements, database design and system architecture.
 
 Every milestone must have:
 - Defined implementation scope.
@@ -501,7 +501,7 @@ If a conflict is discovered, stop and request clarification rather than silently
 
 ---
 
-**Project:** Kaif's GYM  
+**Project:** Barbell Arena  
 **Document:** IMPLEMENTATION_ROADMAP.md  
 **Version:** 1.0  
 **Status:** Planning Draft

@@ -1,6 +1,6 @@
-# Kaif's GYM
+# Barbell Arena
 
-Kaif's GYM is a single-branch gym management system for an admin/owner. The
+Barbell Arena is a single-branch gym management system for an admin/owner. The
 approved application architecture is a React + Vite frontend and a Node.js +
 Express modular-monolith backend with MongoDB.
 
@@ -10,6 +10,9 @@ assignments, payment ledger management, and versioned trainer commission
 agreements. Freeze/unfreeze remains deferred pending approved date policies.
 Commission calculations, adjustments, statements and payouts are not
 implemented.
+
+The approved backend architecture refactor (Phases 1–6) is complete. See
+`REFACTOR_NOTES.md` for the module-by-module changes and final verification.
 
 ## Requirements
 
@@ -47,6 +50,16 @@ npm test
 ```
 
 Use `npm start` for the non-watch server process.
+
+### Backend architecture
+
+`server.js` loads configuration, connects to MongoDB, starts the Express
+application and expiry job, and handles shutdown. `app.js` assembles shared
+middleware and the versioned API router. Module routes validate and dispatch
+requests; controllers handle HTTP flow and straightforward queries; services
+are limited to multi-step business rules and consistency-sensitive operations.
+Mongoose models live with their modules. Shared infrastructure is kept in
+`configs/`, `middlewares/`, and `utils/`.
 
 ### Backend environment
 
@@ -100,30 +113,36 @@ do not receive login accounts.
 | `GET` | `/api/v1/members` | Search, filter and paginate members |
 | `GET` | `/api/v1/members/:memberId` | Get member details |
 | `PATCH` | `/api/v1/members/:memberId` | Update profile fields |
-| `PATCH` | `/api/v1/members/:memberId/status` | Set status to `active`, `inactive` or `archived` |
+| `PATCH` | `/api/v1/members/:memberId/status` | Set status to `active` or `inactive` |
+| `DELETE` | `/api/v1/members/:memberId` | Permanently delete a member when no active membership or trainer assignment exists |
 
 List query parameters: `page` (default 1), `limit` (default 20, maximum 100),
-`search`, `status`, `sortBy` (`registrationDate`, `firstName`, `lastName`,
-`memberCode`, `createdAt`, `updatedAt`) and `sortOrder` (`asc` or `desc`).
-Search covers member code, names, email and phone. List responses include
+`search`, `status`, `sortBy` (`registrationDate`, `fullName`, `memberCode`,
+`createdAt`, `updatedAt`) and `sortOrder` (`asc` or `desc`). Search covers
+member code, full name, father's name, email and phone. List responses include
 pagination metadata.
 
-Member records follow `DATABASE_DESIGN.md`: first/last name, phone, optional
+Member records include required full name and father's name, phone, optional
 email, gender, date of birth, address, profile image, emergency contact,
-registration date, status, notes and timestamps. The agreed M4 profile shape
-uses `address: { text }` and an optional `emergencyContact: { name, phone }`.
+registration date, status, notes and timestamps. The profile shape uses
+`address: { text }` and an optional `emergencyContact: { name, phone }`.
 Local ten-digit Indian mobile numbers are normalized to `+91`; international
 numbers must include a country code and use E.164 format. Emails are
 lowercased; phone and email are not unique because the approved database
-design only defines `memberCode` uniqueness. Generated member codes use
-`KG-` plus 12 random uppercase hex characters, backed by a unique index and
-collision retry.
+design only defines `memberCode` uniqueness. Member codes are six characters:
+`BA` followed by a four-digit sequence, starting at `BA0001`. The next code is
+selected after the highest code currently used by a member or retained history.
+The unique member-code index and retry on duplicate-key conflicts protect
+concurrent creation. Creation returns HTTP 409 if all 9,999 sequence values
+have been used.
 
 Member indexes: unique `memberCode`, non-unique `phone` and `status`.
-Administrative create, update, status and archive actions write append-only
-records to `auditLogs`; audit snapshots contain member code, status and changed
-field names, not profile contact values. Members are deactivated/archived, not
-permanently deleted; related history is not cascaded or removed.
+Administrative create, update, status and deletion actions write append-only
+records to `auditLogs`. Permanent deletion never removes payments, audit logs,
+memberships or trainer assignments. Historical membership, payment and
+assignment records retain a member-name snapshot. Deletion is rejected while
+an active membership or trainer assignment exists. Member status is active or
+inactive; there is no archive workflow.
 
 Member updates and their audit records are saved sequentially rather than in a
 multi-document transaction to remain compatible with the project's current
@@ -175,10 +194,9 @@ prior expiry is clamped to that boundary.
 Dates are date-only UTC values. The start is inclusive and expiry is exclusive:
 expiry is the start date plus the plan's calendar-month duration, clamped to
 the target month's last day. A renewal starts at the previous expiry date,
-so membership validity periods do not overlap. Membership fee and price
-snapshots are stored as integer paise (`totalFeePaise`,
-`amountPaidPaise`, and `outstandingBalancePaise`). Amount paid starts at zero;
-payment recording and balance updates belong to a later milestone.
+so membership validity periods do not overlap. Membership fee and price snapshots are stored as integer paise
+(`totalFeePaise`, `amountPaidPaise`, and `outstandingBalancePaise`). Amount
+paid starts at zero and is reconciled as payment ledger entries are recorded.
 
 Memberships preserve a plan-name, duration and price snapshot. Changing the
 plan later does not change existing membership records. Unique membership
@@ -216,7 +234,7 @@ new assignments.
 | `GET` | `/api/v1/trainer-assignments/:assignmentId` | Get assignment details |
 | `PATCH` | `/api/v1/trainer-assignments/:assignmentId/end` | End an active assignment |
 
-Trainer profiles include a generated `KGT-` code, names, normalized phone,
+Trainer profiles include a generated `BAT-` code, names, normalized phone,
 optional email and image URL, specializations, joining date, status and
 administrative notes. Assignment bodies require `memberId`, `trainerId` and
 supporting `proof: { url, fileName }`; proof is an HTTPS reference and display
@@ -343,21 +361,23 @@ client/
     main.jsx
 server/
   src/
-    configs/
-    controllers/
-    jobs/
-    middlewares/
-    models/
+    app.js
+    server.js
     modules/
       audit/
+      assignments/
+      auth/
+      commissions/
       members/
       memberships/
-      trainers/
-      assignments/
+        models/
       payments/
+      trainers/
+    configs/
+    jobs/
+    middlewares/
     routes/
     scripts/
-    services/
     utils/
   tests/
   package.json

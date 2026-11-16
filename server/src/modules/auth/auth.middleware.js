@@ -1,8 +1,9 @@
 import { ApiError } from '../../utils/ApiError.js'
 import { asyncHandler } from '../../utils/asyncHandler.js'
-import { toAdminProfile } from './auth.service.js'
+import { Admin } from './admin.model.js'
+import { toAdminProfile, verifyAdminToken } from './auth.service.js'
 
-export function createAuthenticate({ AdminModel, authService, cookieName }) {
+export function createAuthenticate({ cookieName, jwtSecret }) {
   return asyncHandler(async (req, res, next) => {
     const token = req.cookies?.[cookieName]
 
@@ -12,12 +13,12 @@ export function createAuthenticate({ AdminModel, authService, cookieName }) {
 
     let payload
     try {
-      payload = authService.verifyToken(token)
+      payload = verifyAdminToken(token, jwtSecret)
     } catch {
       throw new ApiError(401, 'Authentication required')
     }
 
-    const admin = await AdminModel.findById(payload.sub)
+    const admin = await Admin.findById(payload.sub)
     if (!admin || !admin.isActive) {
       throw new ApiError(401, 'Authentication required')
     }

@@ -27,7 +27,6 @@ function createTestApp(options = {}) {
     allowedOrigins: ['http://localhost:5173'],
     getDatabaseState: () => 'connected',
     authConfig: options.authConfig ?? authConfig,
-    AdminModel: Admin,
     loginRateLimit: options.loginRateLimit,
     loginWindowMs: options.loginWindowMs,
   })
@@ -74,11 +73,9 @@ before(async () => {
   const attempts = await Promise.allSettled([
     bootstrapAdmin(
       { name: 'Gym Owner', email: adminEmail, password: adminPassword },
-      Admin,
     ),
     bootstrapAdmin(
       { name: 'Gym Owner', email: adminEmail, password: adminPassword },
-      Admin,
     ),
   ])
   const successfulBootstraps = attempts.filter((attempt) => attempt.status === 'fulfilled')
@@ -107,7 +104,6 @@ test('admin bootstrap rejects a second account', async () => {
   await assert.rejects(
     bootstrapAdmin(
       { name: 'Second Owner', email: 'second-owner@example.test', password: adminPassword },
-      Admin,
     ),
     (error) => error instanceof ApiError && error.statusCode === 409,
   )

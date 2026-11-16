@@ -30,6 +30,7 @@ export function PaymentReceiptPage() {
   if (!receipt) return <p className="rounded-xl border border-danger/30 bg-danger/10 p-4 text-sm text-danger" role="alert">{error || 'Receipt not found'}</p>
 
   const payment = receipt.payment
+  const member = payment.member ?? payment.memberSnapshot
   const netReceivedPaise = payment.amountPaise - (payment.reversedAmountPaise ?? 0)
 
   return (
@@ -42,11 +43,11 @@ export function PaymentReceiptPage() {
       </div>
       <Card className="p-6 sm:p-10">
         <div className="flex flex-col justify-between gap-4 border-b border-border pb-6 sm:flex-row sm:items-start">
-          <div><p className="text-sm font-semibold text-text-secondary">KAIF&apos;S GYM</p><h1 className="mt-2 text-2xl font-semibold">Payment receipt</h1><p className="mt-1 text-sm text-text-muted">Original payment and linked corrections</p></div>
+          <div><p className="text-sm font-semibold text-text-secondary">BARBELL ARENA</p><h1 className="mt-2 text-2xl font-semibold">Payment receipt</h1><p className="mt-1 text-sm text-text-muted">Original payment and linked corrections</p></div>
           <div className="sm:text-right"><p className="text-xs text-text-muted">Transaction reference</p><p className="mt-1 font-mono text-sm font-medium">{payment.transactionCode}</p><p className="mt-1 text-sm text-text-secondary">{formatMembershipDate(payment.paymentDate)}</p></div>
         </div>
         <dl className="grid gap-5 border-b border-border py-6 sm:grid-cols-2">
-          <div><dt className="text-xs text-text-muted">Received from</dt><dd className="mt-1 text-sm font-medium">{payment.member?.firstName} {payment.member?.lastName}</dd><dd className="mt-1 text-xs text-text-secondary">{payment.member?.memberCode} · {payment.member?.phone}</dd></div>
+          <div><dt className="text-xs text-text-muted">Received from</dt><dd className="mt-1 text-sm font-medium">{member?.fullName}</dd><dd className="mt-1 text-xs text-text-secondary">{member?.memberCode}{payment.member?.phone ? ` · ${payment.member.phone}` : ''}</dd></div>
           <div><dt className="text-xs text-text-muted">Membership</dt><dd className="mt-1 text-sm font-medium">{payment.membership?.membershipCode}</dd></div>
           <div><dt className="text-xs text-text-muted">Payment method</dt><dd className="mt-1 text-sm">{payment.paymentMethod?.toUpperCase()}</dd></div>
           {payment.referenceNumber && <div><dt className="text-xs text-text-muted">UPI reference</dt><dd className="mt-1 break-all text-sm">{payment.referenceNumber}</dd></div>}

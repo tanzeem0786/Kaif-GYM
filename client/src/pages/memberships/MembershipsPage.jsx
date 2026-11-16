@@ -124,7 +124,7 @@ export function MembershipsPage() {
               <option value="active">Active</option>
               <option value="expired">Expired</option>
               <option value="inactive">Inactive</option>
-              <option value="frozen">Frozen</option>
+              {/* <option value="frozen">Frozen</option> */}
             </select>
           </label>
           <Button type="submit" variant="secondary">Search</Button>
@@ -194,11 +194,11 @@ export function MembershipsPage() {
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-text-primary">{membership.membershipCode}</span>
+                      <span className="font-semibold text-text-primary">{membership.member?.fullName ?? membership.memberSnapshot?.fullName}</span>
                       <MembershipStatusBadge status={membership.status} />
                     </div>
                     <p className="mt-1 text-sm text-text-secondary">
-                      {membership.member?.firstName} {membership.member?.lastName}
+                      {membership.membershipCode}
                       <span className="mx-2 text-text-muted">·</span>
                       {membership.planSnapshot?.name}
                     </p>

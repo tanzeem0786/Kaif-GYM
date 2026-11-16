@@ -18,10 +18,3 @@ export const bootstrapAdminSchema = z.object({
     .min(12, 'must contain at least 12 characters')
     .refine((value) => Buffer.byteLength(value, 'utf8') <= 72, 'must not exceed 72 UTF-8 bytes'),
 })
-
-export function validateBody(schema) {
-  return function validateRequestBody(req, res, next) {
-    req.body = schema.parse(req.body)
-    next()
-  }
-}

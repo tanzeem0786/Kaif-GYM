@@ -399,15 +399,15 @@ reused. No frontend or unrelated dependencies were added.
 ### Backend implementation
 
 - Added `members` and `auditLogs` Mongoose models. Member profile fields follow
-  `DATABASE_DESIGN.md`; the approved M4 nested shapes are `address: { text }`
-  and optional `emergencyContact: { name, phone }`. Member status supports
-  `active`, `inactive` and `archived`.
+  `DATABASE_DESIGN.md`; member names use required `fullName` and `fatherName`,
+  with `address: { text }` and optional `emergencyContact: { name, phone }`.
+  Member status supports `active` and `inactive`.
 - Added indexes: unique `memberCode`, non-unique `phone` and `status`;
   audit-log indexes on `module + createdAt` and `entityId + createdAt`.
-- Generated unique member codes as `KG-` followed by 12 random uppercase hex
-  characters. The database unique index is authoritative and collisions are
-  retried. Phone/email are not unique because the finalized database design
-  defines only member-code uniqueness.
+- Member codes now use the six-character sequential format `BA0001`, with a
+  unique database index and retries for concurrent allocations. Phone/email
+  are not unique because the finalized database design defines only
+  member-code uniqueness.
 - Local 10-digit Indian mobile numbers (including optional trunk `0`) normalize
   to `+91`; international numbers must include a country prefix and validate
   as E.164. Email is optional and normalized to lowercase.
@@ -416,12 +416,13 @@ reused. No frontend or unrelated dependencies were added.
   - `GET /api/v1/members` — search, status filter, sort and pagination.
   - `GET /api/v1/members/:memberId` — details.
   - `PATCH /api/v1/members/:memberId` — profile update.
-  - `PATCH /api/v1/members/:memberId/status` — activate, deactivate or archive.
+  - `PATCH /api/v1/members/:memberId/status` — activate or deactivate.
+  - `DELETE /api/v1/members/:memberId` — permanently delete when there is no
+    active membership or trainer assignment; preserve related history.
 - Zod validates request bodies, IDs and query values. Member operations write
   append-only audit events with actor, action, module, entity, status and
   changed-field metadata; audit records do not duplicate contact values.
-- No public/member authentication, membership logic, trainer assignment,
-  payment logic or permanent member deletion was added.
+- No public/member authentication was added.
 - Member writes and audit writes are awaited sequentially instead of using a
   transaction, because the configured/test MongoDB is standalone and rejects
   transactions. Audit failures are surfaced, not swallowed, but a database
@@ -435,7 +436,7 @@ reused. No frontend or unrelated dependencies were added.
   sort, pagination, loading, empty, retry and API-error states.
 - Added create/edit forms with server validation feedback; member details with
   profile, status and clearly marked later-milestone history placeholders.
-- Added confirmation dialogs for deactivation, archival and reactivation.
+- Added confirmation dialogs for deactivation and reactivation.
 - Wired the Members sidebar entry and authenticated routes. M4 pages use only
   existing semantic theme tokens; the dashboard now links to the implemented
   member directory.
@@ -551,7 +552,7 @@ reused. No frontend or unrelated dependencies were added.
 ### Backend implementation
 
 - Added trainer and trainer-assignment Mongoose models. Trainer codes use the
-  generated format `KGT-` plus 12 uppercase random hexadecimal characters.
+  generated format `BAT-` plus 12 uppercase random hexadecimal characters.
   Trainer indexes include unique `trainerCode` and `status`.
 - Assignment records retain member/trainer references, UTC start/end dates,
   active/ended status, required proof URL/filename, optional notes and
@@ -715,7 +716,7 @@ reused. No frontend or unrelated dependencies were added.
 ### Backend implementation
 
 - Added the append-only-in-practice `Payment` ledger model with unique
-  transaction codes (`KGP-` plus 16 uppercase hexadecimal characters), unique
+  transaction codes (`BAP-` plus 16 uppercase hexadecimal characters), unique
   idempotency keys, integer `amountPaise`, member and membership references,
   Cash/UPI method, UTC payment date, optional UPI reference/notes, admin
   attribution, status and cumulative reversal amount. Request fingerprints

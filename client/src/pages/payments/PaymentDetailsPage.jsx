@@ -95,7 +95,7 @@ export function PaymentDetailsPage() {
     )
   }
 
-  const member = payment.member
+  const member = payment.member ?? payment.memberSnapshot
   const membership = payment.membership
   const original = payment.reversalOf
 
@@ -138,7 +138,18 @@ export function PaymentDetailsPage() {
         <Card className="p-5 sm:p-7">
           <h3 className="text-base font-semibold">Membership and member</h3>
           <dl className="mt-5 space-y-4">
-            <div><dt className="text-xs text-text-muted">Member</dt><dd className="mt-1 text-sm"><Link className="font-medium text-text-primary underline" to={`/members/${member?._id}`}>{member?.firstName} {member?.lastName} · {member?.memberCode}</Link></dd></div>
+            <div>
+              <dt className="text-xs text-text-muted">Member</dt>
+              <dd className="mt-1 text-sm">
+                {payment.member ? (
+                  <Link className="font-medium text-text-primary underline" to={`/members/${payment.member._id}`}>
+                    {member?.fullName} · {member?.memberCode}
+                  </Link>
+                ) : (
+                  <span>{member?.fullName} · {member?.memberCode}</span>
+                )}
+              </dd>
+            </div>
             <div><dt className="text-xs text-text-muted">Membership</dt><dd className="mt-1 text-sm"><Link className="font-medium text-text-primary underline" to={`/memberships/${membership?._id}`}>{membership?.membershipCode}</Link></dd></div>
             <div><dt className="text-xs text-text-muted">Membership fee</dt><dd className="mt-1 text-sm">{formatRupeesFromPaise(membership?.totalFeePaise ?? 0)}</dd></div>
             <div><dt className="text-xs text-text-muted">Outstanding balance now</dt><dd className="mt-1 text-sm font-medium">{formatRupeesFromPaise(membership?.outstandingBalancePaise ?? 0)}</dd></div>

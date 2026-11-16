@@ -1,7 +1,7 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "Kaif's GYM API server",
+  "description": "Barbell Arena API server",
   "license": "ISC",
   "author": "Tanzeem Ahmad",
   "type": "module",

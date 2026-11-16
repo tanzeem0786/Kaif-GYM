@@ -4,8 +4,8 @@ function formatInputDate(value) {
 
 export function memberToFormValues(member) {
   return {
-    firstName: member?.firstName ?? '',
-    lastName: member?.lastName ?? '',
+    fullName: member?.fullName ?? '',
+    fatherName: member?.fatherName ?? '',
     phone: member?.phone ?? '',
     email: member?.email ?? '',
     gender: member?.gender ?? '',

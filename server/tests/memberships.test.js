@@ -31,7 +31,6 @@ function createTestApp() {
     allowedOrigins: ['http://localhost:5173'],
     getDatabaseState: () => 'connected',
     authConfig,
-    AdminModel: Admin,
     MemberModel: Member,
     MembershipModel: Membership,
     MembershipPlanModel: MembershipPlan,
@@ -69,10 +68,11 @@ async function login(baseUrl) {
 }
 
 async function createMemberRecord() {
+  const memberCount = await Member.countDocuments()
   return Member.create({
-    memberCode: `KG-${randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase()}`,
-    firstName: 'Amina',
-    lastName: 'Rahman',
+    memberCode: `BA${String(memberCount + 1).padStart(4, '0')}`,
+    fullName: 'Amina Rahman',
+    fatherName: 'Nadeem Rahman',
     phone: '+919876543210',
   })
 }
@@ -112,7 +112,7 @@ before(async () => {
     MembershipPlan.init(),
     AuditLog.init(),
   ])
-  await bootstrapAdmin(adminCredentials, Admin)
+  await bootstrapAdmin(adminCredentials)
   admin = await Admin.findOne({ email: adminCredentials.email })
 })
 
@@ -243,6 +243,7 @@ test('only approved durations can be used and a membership snapshots plan price'
     const body = await response.json()
 
     assert.equal(response.status, 201)
+    assert.match(body.data.membership.membershipCode, /^BAM-[A-F0-9]{16}$/)
     assert.equal(body.data.membership.planSnapshot.durationMonths, 3)
     assert.equal(body.data.membership.planSnapshot.pricePaise, 450000)
     assert.equal(body.data.membership.totalFeePaise, 450000)
@@ -456,13 +457,15 @@ test('membership list supports search, filters, pagination and member history', 
     })
 
     const listResponse = await fetch(
-      `${baseUrl}/api/v1/memberships?search=Amina&memberId=${member.id}&status=active&page=1&limit=1`,
+      `${baseUrl}/api/v1/memberships?search=Nadeem&memberId=${member.id}&status=active&page=1&limit=1`,
       { headers: { Cookie: cookie } },
     )
     const listed = await listResponse.json()
     assert.equal(listResponse.status, 200)
     assert.equal(listed.data.memberships.length, 1)
     assert.equal(listed.data.pagination.total, 2)
+    assert.equal(listed.data.memberships[0].member.fullName, 'Amina Rahman')
+    assert.equal(listed.data.memberships[0].member.fatherName, 'Nadeem Rahman')
     const historyResponse = await fetch(
       `${baseUrl}/api/v1/memberships/member/${member.id}`,
       { headers: { Cookie: cookie } },

@@ -83,7 +83,7 @@ async function main() {
       throw new Error('Passwords do not match.')
     }
 
-    const admin = await bootstrapAdmin({ name, email, password }, Admin)
+    const admin = await bootstrapAdmin({ name, email, password })
     stdout.write(`Admin account created for ${admin.email}.\n`)
   } finally {
     await disconnectDatabase()

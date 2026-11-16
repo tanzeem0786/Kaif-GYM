@@ -1,4 +1,4 @@
-# DATABASE DESIGN — KAIF'S GYM
+# DATABASE DESIGN — Barbell Arena
 
 **Version:** 1.0  
 **Status:** Technical Draft  
@@ -11,7 +11,7 @@
 
 # 1. DATABASE OVERVIEW
 
-Kaif's GYM uses MongoDB as its primary database.
+Barbell Arena uses MongoDB as its primary database.
 
 The database is designed to support:
 - Member management.
@@ -98,8 +98,8 @@ Purpose: Store gym member information.
 |---|---|---|
 | _id | ObjectId | Primary identifier |
 | memberCode | String | Unique member reference |
-| firstName | String | First name |
-| lastName | String | Last name |
+| fullName | String | Member's full name |
+| fatherName | String | Father's name |
 | phone | String | Contact number |
 | email | String | Optional email |
 | gender | String | Optional gender |
@@ -108,16 +108,21 @@ Purpose: Store gym member information.
 | profileImage | String | Optional image URL |
 | emergencyContact | Object | Emergency information |
 | registrationDate | Date | Registration date |
-| status | String | Active / Inactive / Archived |
+| status | String | Active / Inactive |
 | notes | String | Admin notes |
 | createdAt | Date | Creation timestamp |
 | updatedAt | Date | Update timestamp |
 
 Rules:
-- Member code must be unique.
+- Member codes use `BA` followed by four digits, starting at `BA0001`, and must
+  be unique.
+- Sequential allocation checks member profiles and retained member-history
+  snapshots; duplicate-key conflicts are retried.
 - Phone number must be validated.
 - Deactivation must preserve historical relationships.
-- Member deletion follows restricted deletion policy.
+- Permanent deletion is blocked while an active membership or trainer assignment exists.
+- Deletion preserves payment, audit, membership and assignment history; historical
+  memberships, payments and assignments retain a member snapshot.
 
 ## 3.3 Trainer
 
@@ -647,7 +652,7 @@ These must follow approved business decisions before implementation.
 
 ---
 
-**Project:** Kaif's GYM  
+**Project:** Barbell Arena  
 **Document:** DATABASE_DESIGN.md  
 **Version:** 1.0  
 **Status:** Technical Draft

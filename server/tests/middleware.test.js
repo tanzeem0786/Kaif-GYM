@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import mongoose from 'mongoose'
 import test from 'node:test'
 import { errorHandler } from '../src/middlewares/errorHandler.js'
 import { ApiError } from '../src/utils/ApiError.js'
@@ -28,6 +29,27 @@ test('central error handler returns known API errors consistently', () => {
     success: false,
     message: 'Resource conflict',
     errors: [{ field: 'name', message: 'Already exists' }],
+  })
+})
+
+test('central error handler returns Mongoose validation errors as bad requests', () => {
+  const response = createResponse()
+  const error = new mongoose.Error.ValidationError()
+  error.addError(
+    'membershipCode',
+    new mongoose.Error.ValidatorError({
+      path: 'membershipCode',
+      message: 'Path `membershipCode` is invalid.',
+    }),
+  )
+
+  errorHandler(error, {}, response, assert.fail)
+
+  assert.equal(response.statusCode, 400)
+  assert.deepEqual(response.body, {
+    success: false,
+    message: 'Request validation failed',
+    errors: [{ field: 'membershipCode', message: 'Path `membershipCode` is invalid.' }],
   })
 })
 

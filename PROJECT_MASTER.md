@@ -1,4 +1,4 @@
-# PROJECT MASTER — KAIF'S GYM
+# PROJECT MASTER — Barbell Arena
 
 **Document Version:** 1.0  
 **Project Status:** Planning / Pre-Implementation  
@@ -14,7 +14,7 @@
 
 ## 1.1 Introduction
 
-Kaif's GYM is a web-based Gym Management System designed to simplify and centralize daily gym operations.
+Barbell Arena is a web-based Gym Management System designed to simplify and centralize daily gym operations.
 
 The application provides an admin-only dashboard to manage members, memberships, trainers, payments, trainer commissions, notifications, reports and operational activities.
 
@@ -1089,7 +1089,7 @@ The following documents work together:
 
 ## FINAL PROJECT PRINCIPLE
 
-Build Kaif's GYM as a secure, reliable and maintainable gym management platform.
+Build Barbell Arena as a secure, reliable and maintainable gym management platform.
 
 Business correctness, financial accuracy, data integrity and usability take priority over unnecessary complexity.
 
@@ -1126,7 +1126,7 @@ Mandatory rules:
 
 
 
-**Project:** Kaif's GYM  
+**Project:** Barbell Arena  
 **Document:** PROJECT_MASTER.md  
 **Version:** 1.0  
 **Status: Confirmed Business Rule.**

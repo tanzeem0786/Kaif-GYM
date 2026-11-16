@@ -1,11 +1,12 @@
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Plus, Search, UsersRound } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Plus, Search, Trash2, UsersRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Badge } from '../../components/common/Badge.jsx'
 import { Button } from '../../components/common/Button.jsx'
 import { Card } from '../../components/common/Card.jsx'
+import { ConfirmDialog } from '../../components/members/ConfirmDialog.jsx'
 import { MemberStatusBadge } from '../../components/members/MemberStatusBadge.jsx'
-import { listMembers } from '../../services/memberApi.js'
+import { deleteMember, listMembers } from '../../services/memberApi.js'
 import { getApiErrorMessage } from '../../utils/apiError.js'
 
 const initialFilters = { searchInput: '', search: '', status: '' }
@@ -27,6 +28,9 @@ export function MembersPage() {
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [memberToDelete, setMemberToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
   const [sortOrder, setSortOrder] = useState('desc')
   const [refreshToken, setRefreshToken] = useState(0)
 
@@ -65,7 +69,7 @@ export function MembersPage() {
     event.preventDefault()
     setLoading(true)
     setPage(1)
-    const search = filters.searchInput.trim()
+    const search = filters.searchInput;
     if (search === filters.search && page === 1) {
       setRefreshToken((current) => current + 1)
     } else {
@@ -90,6 +94,27 @@ export function MembersPage() {
   function toggleSort() {
     setLoading(true)
     setSortOrder((current) => (current === 'desc' ? 'asc' : 'desc'))
+  }
+
+  async function confirmDeleteMember() {
+    if (!memberToDelete) return
+    setDeleting(true)
+    setActionError('')
+    try {
+      await deleteMember(memberToDelete._id)
+      setMemberToDelete(null)
+      setLoading(true)
+      if (members.length === 1 && page > 1) {
+        setPage((current) => current - 1)
+      } else {
+        setRefreshToken((current) => current + 1)
+      }
+    } catch (requestError) {
+      setMemberToDelete(null)
+      setActionError(getApiErrorMessage(requestError, 'Could not delete this member.'))
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const members = result?.members ?? []
@@ -147,7 +172,6 @@ export function MembersPage() {
               <option value="">All statuses</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-              <option value="archived">Archived</option>
             </select>
           </label>
           <Button type="submit" variant="secondary">
@@ -160,6 +184,12 @@ export function MembersPage() {
           )}
         </form>
       </Card>
+
+      {actionError && (
+        <div className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3" role="alert">
+          <p className="text-sm text-danger">{actionError}</p>
+        </div>
+      )}
 
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
@@ -238,17 +268,17 @@ export function MembersPage() {
           <>
             <div className="divide-y divide-border">
               {members.map((member) => (
-                <Link
-                  className="grid gap-3 px-5 py-4 transition-colors hover:bg-hover/60 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto_auto] sm:items-center"
+                <div
+                  className="grid gap-3 px-5 py-4 transition-colors hover:bg-hover/60 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto_auto_auto] sm:items-center"
                   key={member._id}
-                  to={`/members/${member._id}`}
                 >
-                  <span className="min-w-0">
+                  <Link className="min-w-0" to={`/members/${member._id}`}>
                     <span className="block truncate text-sm font-medium text-text-primary">
-                      {member.firstName} {member.lastName}
+                      {member.fullName}
                     </span>
+                    <span className="mt-1 block truncate text-xs text-text-muted">Father: {member.fatherName}</span>
                     <span className="mt-1 block text-xs text-text-muted">{member.memberCode}</span>
-                  </span>
+                  </Link>
                   <span className="min-w-0">
                     <span className="block truncate text-sm text-text-secondary">{member.phone}</span>
                     <span className="mt-1 block truncate text-xs text-text-muted">
@@ -259,7 +289,19 @@ export function MembersPage() {
                     Registered {formatDate(member.registrationDate)}
                   </span>
                   <MemberStatusBadge status={member.status} />
-                </Link>
+                  <Button
+                    aria-label={`Delete ${member.fullName} (${member.memberCode})`}
+                    className="min-h-9 px-3"
+                    onClick={() => {
+                      setActionError('')
+                      setMemberToDelete(member)
+                    }}
+                    variant="secondary"
+                  >
+                    <Trash2 aria-hidden="true" className="size-4" />
+                    Delete
+                  </Button>
+                </div>
               ))}
             </div>
             {pagination && (
@@ -295,6 +337,16 @@ export function MembersPage() {
           </>
         )}
       </Card>
+      {memberToDelete && (
+        <ConfirmDialog
+          busy={deleting}
+          confirmLabel="Delete member"
+          description={`${memberToDelete.fullName} (${memberToDelete.memberCode}) will be permanently deleted. Historical memberships, payments, trainer assignments, and audit records will be retained. Members with active memberships or trainer assignments cannot be deleted.`}
+          onCancel={() => setMemberToDelete(null)}
+          onConfirm={confirmDeleteMember}
+          title="Permanently delete this member?"
+        />
+      )}
     </div>
   )
 }
