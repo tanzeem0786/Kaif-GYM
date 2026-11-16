@@ -1,8 +1,9 @@
+import { expireMemberships } from '../modules/memberships/membership.service.js'
+
 export function createMembershipExpiryJob({
-  expireMemberships,
   intervalMs = 60_000,
   logger = console,
-}) {
+} = {}) {
   let timer
   let running
 

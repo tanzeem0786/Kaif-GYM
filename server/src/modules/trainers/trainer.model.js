@@ -6,7 +6,7 @@ export const trainerSchema = new mongoose.Schema(
       type: String,
       required: true,
       immutable: true,
-      match: /^KGT-[A-F0-9]{12}$/,
+      match: /^BAT-[A-F0-9]{12}$/,
     },
     firstName: { type: String, required: true, trim: true, minlength: 1, maxlength: 100 },
     lastName: { type: String, required: true, trim: true, minlength: 1, maxlength: 100 },

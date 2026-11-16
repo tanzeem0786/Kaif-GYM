@@ -9,13 +9,23 @@ const planSnapshotSchema = new mongoose.Schema(
   { _id: false },
 )
 
+const memberSnapshotSchema = new mongoose.Schema(
+  {
+    memberId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    memberCode: { type: String, required: true },
+    fullName: { type: String, required: true },
+    fatherName: { type: String, required: true },
+  },
+  { _id: false },
+)
+
 export const membershipSchema = new mongoose.Schema(
   {
     membershipCode: {
       type: String,
       required: true,
       immutable: true,
-      match: /^KGM-[A-F0-9]{16}$/,
+      match: /^BAM-[A-F0-9]{16}$/,
     },
     member: {
       type: mongoose.Schema.Types.ObjectId,
@@ -23,6 +33,7 @@ export const membershipSchema = new mongoose.Schema(
       required: true,
       immutable: true,
     },
+    memberSnapshot: { type: memberSnapshotSchema },
     plan: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'MembershipPlan',

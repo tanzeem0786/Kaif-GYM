@@ -17,6 +17,15 @@ export function errorHandler(error, req, res, next) {
     return
   }
 
+  if (error.name === 'ValidationError' && error.errors) {
+    const errors = Object.values(error.errors).map((issue) => ({
+      field: issue.path,
+      message: issue.message,
+    }))
+    sendError(res, { statusCode: 400, message: 'Request validation failed', errors })
+    return
+  }
+
   if (error.type === 'entity.parse.failed') {
     sendError(res, { statusCode: 400, message: 'Invalid JSON request body' })
     return

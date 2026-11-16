@@ -239,8 +239,8 @@ export function TrainerAssignmentsPanel({ memberId, trainerId }) {
             const relatedMember = typeof assignment.member === 'object' ? assignment.member : null
             const relatedPerson = memberId ? relatedTrainer : relatedMember
             const personLabel = memberId ? trainerName(relatedPerson) : relatedPerson
-              ? `${relatedPerson.firstName} ${relatedPerson.lastName}`
-              : 'Member unavailable'
+              ? relatedPerson.fullName
+              : assignment.memberSnapshot?.fullName ?? 'Member unavailable'
             return (
               <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between" key={assignment._id}>
                 <div className="min-w-0">

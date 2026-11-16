@@ -146,14 +146,14 @@ export function PaymentFormPage() {
               <option value="">{loading ? 'Loading memberships…' : 'Select a membership with balance due'}</option>
               {memberships.map((membership) => (
                 <option key={membership._id} value={membership._id}>
-                  {membership.membershipCode} · {membership.member?.firstName} {membership.member?.lastName} · due {formatRupeesFromPaise(membership.outstandingBalancePaise)}
+                  {membership.membershipCode} · {membership.member?.fullName ?? membership.memberSnapshot?.fullName} · due {formatRupeesFromPaise(membership.outstandingBalancePaise)}
                 </option>
               ))}
             </select>
           </label>
           {selectedMembership && (
             <div className="rounded-xl border border-border bg-surface-elevated p-4">
-              <p className="text-sm font-medium text-text-primary">{selectedMembership.member?.firstName} {selectedMembership.member?.lastName} · {selectedMembership.member?.memberCode}</p>
+              <p className="text-sm font-medium text-text-primary">{selectedMembership.member?.fullName ?? selectedMembership.memberSnapshot?.fullName} · {selectedMembership.member?.memberCode ?? selectedMembership.memberSnapshot?.memberCode}</p>
               <p className="mt-1 text-xs text-text-secondary">
                 {selectedMembership.membershipCode} · {selectedMembership.planSnapshot?.name} · due {formatRupeesFromPaise(selectedMembership.outstandingBalancePaise)}
               </p>

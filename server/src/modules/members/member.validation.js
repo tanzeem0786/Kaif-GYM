@@ -100,8 +100,8 @@ const profileImageSchema = z.preprocess(
 )
 
 const memberFields = {
-  firstName: z.string().trim().min(1).max(100),
-  lastName: z.string().trim().min(1).max(100),
+  fullName: z.string().trim().min(1).max(100),
+  fatherName: z.string().trim().min(1).max(100),
   phone: phoneSchema,
   email: optionalEmail,
   gender: optionalText(50),
@@ -134,34 +134,13 @@ export const memberListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   search: z.string().trim().max(100).default(''),
-  status: z.enum(['active', 'inactive', 'archived']).optional(),
+  status: z.enum(['active', 'inactive']).optional(),
   sortBy: z
-    .enum(['registrationDate', 'firstName', 'lastName', 'memberCode', 'createdAt', 'updatedAt'])
+    .enum(['registrationDate', 'fullName', 'fatherName', 'memberCode', 'createdAt', 'updatedAt'])
     .default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 })
 
 export const memberStatusSchema = z.object({
-  status: z.enum(['active', 'inactive', 'archived']),
+  status: z.enum(['active', 'inactive']),
 })
-
-export function validateBody(schema) {
-  return function validateRequestBody(req, res, next) {
-    req.body = schema.parse(req.body)
-    next()
-  }
-}
-
-export function validateQuery(schema) {
-  return function validateRequestQuery(req, res, next) {
-    req.validatedQuery = schema.parse(req.query)
-    next()
-  }
-}
-
-export function validateParams(schema) {
-  return function validateRequestParams(req, res, next) {
-    req.validatedParams = schema.parse(req.params)
-    next()
-  }
-}

@@ -75,11 +75,11 @@ export function MembershipFormPage() {
           setPreviousMembership(existingRecord)
           setSelectedMember(existingRecord.member)
           setMemberSearch(
-            `${existingRecord.member?.firstName ?? ''} ${existingRecord.member?.lastName ?? ''}`.trim(),
+            existingRecord.member?.fullName ?? '',
           )
         } else if (existingRecord) {
           setSelectedMember(existingRecord)
-          setMemberSearch(`${existingRecord.firstName} ${existingRecord.lastName}`)
+          setMemberSearch(existingRecord.fullName)
           setLatestMembership(historyResult.memberships[0] ?? null)
         }
       })
@@ -103,7 +103,7 @@ export function MembershipFormPage() {
     const timer = setTimeout(() => {
       setMembersLoading(true)
       listMembers(
-        { page: 1, limit: 20, search: memberSearch.trim(), sortBy: 'firstName', sortOrder: 'asc' },
+        { page: 1, limit: 20, search: memberSearch.trim(), sortBy: 'fullName', sortOrder: 'asc' },
         { signal: controller.signal },
       )
         .then((result) => setMemberResults(result.members))
@@ -203,6 +203,19 @@ export function MembershipFormPage() {
     )
   }
 
+  if (membershipId && previousMembership && !previousMembership.member) {
+    return (
+      <div className="mx-auto max-w-2xl rounded-2xl border border-warning/30 bg-warning/10 p-6">
+        <p className="text-sm text-warning">
+          {previousMembership.memberSnapshot?.fullName ?? 'This member'} has a deleted profile, so this membership cannot be renewed.
+        </p>
+        <Button as={Link} className="mt-4" to={`/memberships/${membershipId}`} variant="secondary">
+          Back to membership
+        </Button>
+      </div>
+    )
+  }
+
   if (!membershipId && selectedMember && latestMembership) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
@@ -215,7 +228,7 @@ export function MembershipFormPage() {
         </div>
         <Card className="space-y-4 p-5 sm:p-7">
           <p className="text-sm text-text-secondary">
-            {selectedMember.firstName} {selectedMember.lastName} already has a membership record. Continue through renewal so the validity dates remain sequential and the earlier record is preserved.
+            {selectedMember.fullName} already has a membership record. Continue through renewal so the validity dates remain sequential and the earlier record is preserved.
           </p>
           <div className="rounded-xl border border-border bg-surface-elevated p-4">
             <p className="font-medium">{latestMembership.membershipCode}</p>
@@ -268,7 +281,7 @@ export function MembershipFormPage() {
             <div className="rounded-xl border border-border bg-surface-elevated p-4">
               <p className="text-xs text-text-muted">Renewing for</p>
               <p className="mt-1 font-medium">
-                {selectedMember?.firstName} {selectedMember?.lastName}
+                {selectedMember?.fullName}
               </p>
               <p className="mt-1 text-xs text-text-secondary">{previousMembership?.membershipCode}</p>
             </div>
@@ -282,7 +295,7 @@ export function MembershipFormPage() {
                       <UserRound aria-hidden="true" className="size-5" />
                     </span>
                     <div>
-                      <p className="text-sm font-medium">{selectedMember.firstName} {selectedMember.lastName}</p>
+                      <p className="text-sm font-medium">{selectedMember.fullName}</p>
                       <p className="mt-1 text-xs text-text-muted">{selectedMember.memberCode} · {selectedMember.phone}</p>
                     </div>
                   </div>
@@ -319,7 +332,7 @@ export function MembershipFormPage() {
                           }}
                           type="button"
                         >
-                          <span className="text-sm font-medium">{member.firstName} {member.lastName}</span>
+                          <span className="text-sm font-medium">{member.fullName}</span>
                           <span className="text-xs text-text-muted">{member.memberCode}</span>
                         </button>
                       ))}

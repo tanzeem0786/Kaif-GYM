@@ -1,6 +1,6 @@
-import { ArrowLeft, Archive, CalendarDays, Edit3, Mail, Phone, RotateCcw, UserRound } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Edit3, Mail, Phone, RotateCcw, Trash2, UserRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Badge } from '../../components/common/Badge.jsx'
 import { Button } from '../../components/common/Button.jsx'
 import { Card } from '../../components/common/Card.jsx'
@@ -9,7 +9,7 @@ import { ConfirmDialog } from '../../components/members/ConfirmDialog.jsx'
 import { MemberStatusBadge } from '../../components/members/MemberStatusBadge.jsx'
 import { TrainerAssignmentsPanel } from '../../components/trainers/TrainerAssignmentsPanel.jsx'
 import { PaymentHistoryPanel } from '../../components/payments/PaymentHistoryPanel.jsx'
-import { getMember, updateMemberStatus } from '../../services/memberApi.js'
+import { deleteMember, getMember, updateMemberStatus } from '../../services/memberApi.js'
 import { getApiErrorMessage } from '../../utils/apiError.js'
 
 function formatDate(value) {
@@ -32,13 +32,6 @@ const statusActions = {
       description:
         'The member profile and its historical references will be preserved. You can reactivate this profile later.',
     },
-    {
-      status: 'archived',
-      title: 'Archive this member?',
-      label: 'Archive member',
-      description:
-        'The member will be marked archived. The profile and historical references will be preserved.',
-    },
   ],
   inactive: [
     {
@@ -47,31 +40,18 @@ const statusActions = {
       label: 'Reactivate member',
       description: 'This will return the member profile to active status.',
     },
-    {
-      status: 'archived',
-      title: 'Archive this member?',
-      label: 'Archive member',
-      description:
-        'The member will be marked archived. The profile and historical references will be preserved.',
-    },
-  ],
-  archived: [
-    {
-      status: 'active',
-      title: 'Reactivate this member?',
-      label: 'Reactivate member',
-      description: 'This will return the archived profile to active status.',
-    },
   ],
 }
 
 export function MemberDetailsPage() {
   const { memberId } = useParams()
+  const navigate = useNavigate()
   const [member, setMember] = useState(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [confirmation, setConfirmation] = useState(null)
+  const [deleteConfirmation, setDeleteConfirmation] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -111,6 +91,20 @@ export function MemberDetailsPage() {
     }
   }
 
+  async function confirmDeleteMember() {
+    setBusy(true)
+    setError('')
+    try {
+      await deleteMember(memberId)
+      navigate('/members', { replace: true })
+    } catch (requestError) {
+      setDeleteConfirmation(false)
+      setError(getApiErrorMessage(requestError, 'Could not delete this member.'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   if (loading) {
     return <LoadingScreen label="Loading member details" />
   }
@@ -144,7 +138,7 @@ export function MemberDetailsPage() {
           <div>
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-3xl font-semibold tracking-tight">
-                {member.firstName} {member.lastName}
+                {member.fullName}
               </h2>
               <MemberStatusBadge status={member.status} />
             </div>
@@ -155,6 +149,10 @@ export function MemberDetailsPage() {
               <Edit3 aria-hidden="true" className="size-4" />
               Edit details
             </Button>
+            <Button onClick={() => setDeleteConfirmation(true)} variant="secondary">
+              <Trash2 aria-hidden="true" className="size-4" />
+              Delete member
+            </Button>
             {actions.map((action) => (
               <Button
                 key={action.status}
@@ -163,9 +161,7 @@ export function MemberDetailsPage() {
               >
                 {action.status === 'active' ? (
                   <RotateCcw aria-hidden="true" className="size-4" />
-                ) : (
-                  <Archive aria-hidden="true" className="size-4" />
-                )}
+                ) : null}
                 {action.label}
               </Button>
             ))}
@@ -191,6 +187,10 @@ export function MemberDetailsPage() {
             </div>
           </div>
           <dl className="mt-6 grid gap-x-6 gap-y-5 sm:grid-cols-2">
+            <div>
+              <dt className="text-xs text-text-muted">Father's name</dt>
+              <dd className="mt-1 text-sm text-text-primary">{member.fatherName}</dd>
+            </div>
             <div>
               <dt className="text-xs text-text-muted">Phone</dt>
               <dd className="mt-1 flex items-center gap-2 text-sm text-text-primary">
@@ -308,6 +308,16 @@ export function MemberDetailsPage() {
           onCancel={() => setConfirmation(null)}
           onConfirm={confirmStatusChange}
           title={confirmation.title}
+        />
+      )}
+      {deleteConfirmation && (
+        <ConfirmDialog
+          busy={busy}
+          confirmLabel="Delete member"
+          description={`${member.fullName} (${member.memberCode}) will be permanently deleted. Historical memberships, payments, trainer assignments, and audit records will be retained. Members with active memberships or trainer assignments cannot be deleted.`}
+          onCancel={() => setDeleteConfirmation(false)}
+          onConfirm={confirmDeleteMember}
+          title="Permanently delete this member?"
         />
       )}
     </div>

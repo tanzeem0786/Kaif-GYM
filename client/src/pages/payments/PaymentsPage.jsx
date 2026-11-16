@@ -111,7 +111,7 @@ export function PaymentsPage() {
       </div>
 
       <Card className="p-4 sm:p-5">
-        <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_150px_150px_160px_160px_auto_auto]" onSubmit={applyFilters}>
+        <form className="grid items-end gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_150px_150px_160px_160px_auto_auto]" onSubmit={applyFilters}>
           <label className="relative md:col-span-2 xl:col-span-1">
             <span className="sr-only">Search payments</span>
             <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-muted" />
@@ -134,8 +134,14 @@ export function PaymentsPage() {
               <option value="">All statuses</option><option value="completed">Completed</option><option value="reversed">Reversed</option>
             </select>
           </label>
-          <label className="space-y-1 text-xs text-text-muted">From date<input className="min-h-11 w-full rounded-xl border border-border bg-bg px-3 text-sm text-text-primary outline-none focus:border-focus focus:ring-2 focus:ring-focus/30" onChange={(event) => { setFromDate(event.target.value); setPage(1); setLoading(true) }} type="date" value={fromDate} /></label>
-          <label className="space-y-1 text-xs text-text-muted">To date<input className="min-h-11 w-full rounded-xl border border-border bg-bg px-3 text-sm text-text-primary outline-none focus:border-focus focus:ring-2 focus:ring-focus/30" onChange={(event) => { setToDate(event.target.value); setPage(1); setLoading(true) }} type="date" value={toDate} /></label>
+          <label className="flex flex-col gap-1 text-xs text-text-muted">
+            From date
+            <input className="min-h-11 w-full rounded-xl border border-border bg-bg px-3 text-sm text-text-primary outline-none focus:border-focus focus:ring-2 focus:ring-focus/30" onChange={(event) => { setFromDate(event.target.value); setPage(1); setLoading(true) }} type="date" value={fromDate} />
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-text-muted">
+            To date
+            <input className="min-h-11 w-full rounded-xl border border-border bg-bg px-3 text-sm text-text-primary outline-none focus:border-focus focus:ring-2 focus:ring-focus/30" onChange={(event) => { setToDate(event.target.value); setPage(1); setLoading(true) }} type="date" value={toDate} />
+          </label>
           <Button className="self-end" type="submit" variant="secondary">Search</Button>
           {hasFilters && <Button className="self-end" onClick={clearFilters} type="button" variant="ghost">Clear</Button>}
         </form>
@@ -175,7 +181,7 @@ export function PaymentsPage() {
                       <PaymentStatusBadge status={payment.status} />
                       <Badge variant={payment.type === 'reversal' ? 'warning' : 'neutral'}>{payment.type === 'reversal' ? 'Reversal' : payment.paymentMethod?.toUpperCase()}</Badge>
                     </div>
-                    <p className="mt-1 text-xs text-text-secondary">{payment.member?.firstName} {payment.member?.lastName} · {payment.member?.memberCode} · {payment.membership?.membershipCode}</p>
+                    <p className="mt-1 text-xs text-text-secondary">{payment.member?.fullName ?? payment.memberSnapshot?.fullName} · {payment.member?.memberCode ?? payment.memberSnapshot?.memberCode} · {payment.membership?.membershipCode}</p>
                     <p className="mt-1 text-xs text-text-muted">{formatDate(payment.paymentDate)}{payment.reversalOf ? ` · Reverses ${payment.reversalOf.transactionCode}` : ''}</p>
                   </div>
                   <span className="text-base font-semibold text-text-primary">{formatRupeesFromPaise(payment.amountPaise)}</span>

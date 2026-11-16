@@ -4,11 +4,6 @@ import { connectDatabase, disconnectDatabase, getDatabaseStatus } from './config
 import { parseEnvironment } from './configs/environment.js'
 import { createGracefulShutdown } from './utils/gracefulShutdown.js'
 import { createMembershipExpiryJob } from './jobs/membershipExpiry.job.js'
-import { createMembershipService } from './modules/memberships/membership.service.js'
-import { Membership } from './modules/memberships/models/membership.model.js'
-import { MembershipPlan } from './modules/memberships/models/membershipPlan.model.js'
-import { Member } from './modules/members/member.model.js'
-import { AuditLog } from './modules/audit/auditLog.model.js'
 
 async function startServer() {
   const config = parseEnvironment()
@@ -20,15 +15,7 @@ async function startServer() {
     getDatabaseState: getDatabaseStatus,
     authConfig: config,
   })
-  const membershipService = createMembershipService({
-    MemberModel: Member,
-    MembershipModel: Membership,
-    MembershipPlanModel: MembershipPlan,
-    AuditLogModel: AuditLog,
-  })
-  const membershipExpiryJob = createMembershipExpiryJob({
-    expireMemberships: () => membershipService.expireMemberships(),
-  })
+  const membershipExpiryJob = createMembershipExpiryJob()
   const server = app.listen(config.PORT)
   try {
     await once(server, 'listening')

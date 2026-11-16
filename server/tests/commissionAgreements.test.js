@@ -27,9 +27,6 @@ function createTestApp() {
     allowedOrigins: ['http://localhost:5173'],
     getDatabaseState: () => 'connected',
     authConfig,
-    AdminModel: Admin,
-    TrainerModel: Trainer,
-    CommissionAgreementModel: CommissionAgreement,
     AuditLogModel: AuditLog,
   })
 }
@@ -108,7 +105,7 @@ before(async () => {
     CommissionAgreement.init(),
     AuditLog.init(),
   ])
-  await bootstrapAdmin(adminCredentials, Admin)
+  await bootstrapAdmin(adminCredentials)
 })
 
 beforeEach(async () => {
@@ -223,7 +220,7 @@ test('agreement creation rejects invalid basis, dates, extra fields, and missing
 test('agreement APIs require an authenticated admin and write append-only audit records', async () => {
   await withServer(createTestApp(), async (baseUrl) => {
     const trainer = await Trainer.create({
-      trainerCode: `KGT-${randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase()}`,
+      trainerCode: `BAT-${randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase()}`,
       firstName: 'Nadia',
       lastName: 'Khan',
       phone: '+919876543210',

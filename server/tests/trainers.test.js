@@ -30,10 +30,7 @@ function createTestApp() {
     allowedOrigins: ['http://localhost:5173'],
     getDatabaseState: () => 'connected',
     authConfig,
-    AdminModel: Admin,
     MemberModel: Member,
-    TrainerModel: Trainer,
-    AssignmentModel: TrainerAssignment,
     AuditLogModel: AuditLog,
   })
 }
@@ -88,9 +85,9 @@ async function createTrainer(baseUrl, cookie, overrides = {}) {
 
 async function createMember() {
   return Member.create({
-    memberCode: `KG-${randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase()}`,
-    firstName: 'Amina',
-    lastName: 'Rahman',
+    memberCode: 'BA0001',
+    fullName: 'Amina Rahman',
+    fatherName: 'Nadeem Rahman',
     phone: '+919876543210',
   })
 }
@@ -122,7 +119,7 @@ before(async () => {
     TrainerAssignment.init(),
     AuditLog.init(),
   ])
-  await bootstrapAdmin(adminCredentials, Admin)
+  await bootstrapAdmin(adminCredentials)
   admin = await Admin.findOne({ email: adminCredentials.email })
 })
 
@@ -149,7 +146,7 @@ test('trainer CRUD validates contact details and writes append-only audits', asy
     const createdBody = await createdResponse.json()
     assert.equal(createdResponse.status, 201)
     const trainer = createdBody.data.trainer
-    assert.match(trainer.trainerCode, /^KGT-[A-F0-9]{12}$/)
+    assert.match(trainer.trainerCode, /^BAT-[A-F0-9]{12}$/)
     assert.equal(trainer.phone, '+919876543210')
     assert.equal(trainer.email, 'nadia@example.test')
     assert.deepEqual(trainer.specialization, ['Strength'])
@@ -265,7 +262,14 @@ test('assignments require HTTPS proof and valid dates, allow concurrent records,
     assert.equal(firstResponse.status, 201)
     assert.equal(secondResponse.status, 201)
     const first = (await firstResponse.json()).data.assignment
-    assert.equal((await secondResponse.json()).data.assignment.member, member.id)
+    const second = (await secondResponse.json()).data.assignment
+    assert.equal(second.member, member.id)
+    assert.deepEqual(first.memberSnapshot, {
+      memberId: member.id,
+      memberCode: member.memberCode,
+      fullName: member.fullName,
+      fatherName: member.fatherName,
+    })
 
     const beforeStart = await fetch(`${baseUrl}/api/v1/trainer-assignments/${first._id}/end`, {
       method: 'PATCH',
@@ -285,13 +289,15 @@ test('assignments require HTTPS proof and valid dates, allow concurrent records,
     assert.equal(ended.endDate, '2025-02-10T00:00:00.000Z')
 
     const historyResponse = await fetch(
-      `${baseUrl}/api/v1/trainer-assignments/member/${member.id}?status=ended`,
+      `${baseUrl}/api/v1/trainer-assignments/member/${member.id}?status=ended&search=Nadeem`,
       { headers: { Cookie: cookie } },
     )
     const history = await historyResponse.json()
     assert.equal(historyResponse.status, 200)
     assert.equal(history.data.assignments.length, 1)
     assert.equal(history.data.assignments[0].proof.fileName, 'agreement.pdf')
+    assert.equal(history.data.assignments[0].member.fullName, 'Amina Rahman')
+    assert.equal(history.data.assignments[0].member.fatherName, 'Nadeem Rahman')
 
     const logs = await AuditLog.find({ module: 'trainerAssignments' }).lean()
     assert.equal(logs.length, 3)

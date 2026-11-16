@@ -29,3 +29,8 @@ export async function updateMemberStatus(memberId, status) {
   const { data } = await apiClient.patch(`/members/${memberId}/status`, { status })
   return data.data.member
 }
+
+export async function deleteMember(memberId) {
+  const { data } = await apiClient.delete(`/members/${memberId}`)
+  return data.data
+}

@@ -44,9 +44,13 @@ export function MembershipDetailsPage() {
     )
   }
 
-  const member = membership.member
+  const member = membership.member ?? membership.memberSnapshot
+  const memberProfile = membership.member
   const plan = membership.planSnapshot
-  const renewalAllowed = membership.status !== 'frozen' && membership.status !== 'inactive'
+  const renewalAllowed =
+    Boolean(memberProfile) &&
+    membership.status !== 'frozen' &&
+    membership.status !== 'inactive'
 
   return (
     <div className="space-y-6">
@@ -69,7 +73,7 @@ export function MembershipDetailsPage() {
                 Renew membership
               </Button>
             )}
-            <Button as={Link} to={`/memberships?memberId=${member?._id}`} variant="secondary">
+            <Button as={Link} to={`/memberships?memberId=${member?.memberId ?? member?._id}`} variant="secondary">
               View member history
             </Button>
           </div>
@@ -92,13 +96,17 @@ export function MembershipDetailsPage() {
             <div>
               <dt className="text-xs text-text-muted">Name</dt>
               <dd className="mt-1 text-sm font-medium text-text-primary">
-                <Link className="hover:underline" to={`/members/${member?._id}`}>
-                  {member?.firstName} {member?.lastName}
-                </Link>
+                {memberProfile ? (
+                  <Link className="hover:underline" to={`/members/${memberProfile._id}`}>
+                    {member.fullName}
+                  </Link>
+                ) : (
+                  <span>{member?.fullName}</span>
+                )}
               </dd>
             </div>
             <div><dt className="text-xs text-text-muted">Member code</dt><dd className="mt-1 text-sm">{member?.memberCode}</dd></div>
-            <div><dt className="text-xs text-text-muted">Contact</dt><dd className="mt-1 text-sm">{member?.phone || 'Not provided'}</dd></div>
+            <div><dt className="text-xs text-text-muted">Contact</dt><dd className="mt-1 text-sm">{member?.phone || (memberProfile ? 'Not provided' : 'Profile deleted')}</dd></div>
           </dl>
         </Card>
 

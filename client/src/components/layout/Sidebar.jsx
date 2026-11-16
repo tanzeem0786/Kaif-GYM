@@ -79,7 +79,7 @@ export function Sidebar({ onNavigate }) {
           New management tools will appear here as future milestones are completed.
         </p>
       </div>
-      <p className="px-2 pt-5 text-xs text-text-muted">Kaif&apos;s GYM · Admin</p>
+      <p className="px-2 pt-5 text-xs text-text-muted">Barbell Arena · Admin</p>
     </div>
   )
 }

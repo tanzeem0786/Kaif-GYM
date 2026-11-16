@@ -1,12 +1,22 @@
 import mongoose from 'mongoose'
 
+const memberSnapshotSchema = new mongoose.Schema(
+  {
+    memberId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    memberCode: { type: String, required: true },
+    fullName: { type: String, required: true },
+    fatherName: { type: String, required: true },
+  },
+  { _id: false },
+)
+
 export const paymentSchema = new mongoose.Schema(
   {
     transactionCode: {
       type: String,
       required: true,
       immutable: true,
-      match: /^KGP-[A-F0-9]{16}$/,
+      match: /^BAP-[A-F0-9]{16}$/,
     },
     idempotencyKey: {
       type: String,
@@ -30,6 +40,7 @@ export const paymentSchema = new mongoose.Schema(
       required: true,
       immutable: true,
     },
+    memberSnapshot: { type: memberSnapshotSchema },
     membership: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Membership',

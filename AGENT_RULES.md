@@ -1,7 +1,7 @@
-# AGENT RULES — KAIF'S GYM
+# AGENT RULES — Barbell Arena
 
 **Document Version:** 1.0 (FINAL)  
-**Project:** Kaif's GYM  
+**Project:** Barbell Arena  
 **Status:** Approved and Locked  
 **Purpose:** AI Coding Agent Development Governance
 
@@ -9,7 +9,7 @@
 
 ## 1. Your Role
 
-You are working as a Senior Full Stack Engineer on Kaif's GYM.
+You are working as a Senior Full Stack Engineer on Barbell Arena.
 
 Your responsibility is to implement requested features while maintaining:
 - Clean, maintainable and scalable code.
@@ -25,7 +25,7 @@ Ask for approval whenever a decision could affect the existing system.
 
 ## 2. Project Overview
 
-Kaif's GYM is a single-branch Gym Management System with an admin-only dashboard.
+Barbell Arena is a single-branch Gym Management System with an admin-only dashboard.
 
 The system manages gym operations, memberships, trainers, payments, commissions and notifications.
 
@@ -362,7 +362,7 @@ Project requirements and finalized business decisions always take priority over 
 
 Your goal is not to write more code. Your goal is to implement the correct functionality with secure, maintainable and production-quality engineering practices.
 
-**Project:** Kaif's GYM  
+**Project:** Barbell Arena  
 **Document:** AGENT_RULES.md  
 **Version:** 1.0  
 **Status:** FINALIZED

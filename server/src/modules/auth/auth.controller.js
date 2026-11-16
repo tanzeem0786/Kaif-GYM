@@ -1,13 +1,8 @@
 import { sendSuccess } from '../../utils/ApiResponse.js'
 import { asyncHandler } from '../../utils/asyncHandler.js'
-import { createAuthService } from './auth.service.js'
+import { loginAdmin } from './auth.service.js'
 
-export function createAuthController({ AdminModel, authConfig }) {
-  const authService = createAuthService({
-    AdminModel,
-    jwtSecret: authConfig.JWT_SECRET,
-    jwtExpiresIn: authConfig.JWT_EXPIRES_IN,
-  })
+export function createAuthController(authConfig) {
   const cookieOptions = {
     httpOnly: true,
     secure: authConfig.COOKIE_SECURE,
@@ -16,10 +11,12 @@ export function createAuthController({ AdminModel, authConfig }) {
   }
 
   return {
-    authService,
-
     login: asyncHandler(async (req, res) => {
-      const { admin, token } = await authService.login(req.body)
+      const { admin, token } = await loginAdmin(
+        req.body,
+        authConfig.JWT_SECRET,
+        authConfig.JWT_EXPIRES_IN,
+      )
       res.cookie(authConfig.COOKIE_NAME, token, {
         ...cookieOptions,
         maxAge: authConfig.JWT_EXPIRES_IN * 1000,

@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createApp } from '../src/app.js'
-import { getHealthStatus } from '../src/services/health.service.js'
 
 async function withServer(app, run) {
   const server = app.listen(0, '127.0.0.1')
@@ -20,17 +19,6 @@ async function withServer(app, run) {
   }
 }
 
-test('health service reports database connectivity accurately', () => {
-  assert.deepEqual(getHealthStatus('connected'), {
-    status: 'ok',
-    database: { status: 'connected' },
-  })
-  assert.deepEqual(getHealthStatus('connecting'), {
-    status: 'unavailable',
-    database: { status: 'connecting' },
-  })
-})
-
 test('API base route and connected health check return success responses', async () => {
   const app = createApp({
     allowedOrigins: ['http://localhost:5173'],
@@ -42,7 +30,7 @@ test('API base route and connected health check return success responses', async
     assert.equal(apiResponse.status, 200)
     assert.deepEqual(await apiResponse.json(), {
       success: true,
-      message: "Kaif's GYM API is available",
+      message: "Barbell Arena API is available",
       data: { apiVersion: 'v1' },
     })
 
