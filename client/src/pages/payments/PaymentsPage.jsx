@@ -100,7 +100,7 @@ export function PaymentsPage() {
           <div className="flex items-center gap-2">
             <CreditCard aria-hidden="true" className="size-5 text-text-secondary" />
             <p className="text-sm text-text-secondary">Financial records</p>
-            <Badge variant="neutral">M7</Badge>
+            {/* <Badge variant="neutral">M7</Badge> */}
           </div>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight">Payments</h2>
           <p className="mt-2 text-sm text-text-secondary">

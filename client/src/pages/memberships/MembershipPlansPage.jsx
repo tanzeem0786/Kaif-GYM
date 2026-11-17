@@ -91,7 +91,7 @@ export function MembershipPlansPage() {
         <div>
           <div className="flex items-center gap-2">
             <p className="text-sm text-text-secondary">Membership management</p>
-            <Badge variant="neutral">M5</Badge>
+            {/* <Badge variant="neutral">M5</Badge> */}
           </div>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight">Membership plans</h2>
           <p className="mt-2 text-sm text-text-secondary">

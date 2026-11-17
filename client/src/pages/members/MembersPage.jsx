@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Plus, Search, Trash2, UsersRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Badge } from '../../components/common/Badge.jsx'
+// import { Badge } from '../../components/common/Badge.jsx'
 import { Button } from '../../components/common/Button.jsx'
 import { Card } from '../../components/common/Card.jsx'
 import { ConfirmDialog } from '../../components/members/ConfirmDialog.jsx'
@@ -128,7 +128,7 @@ export function MembersPage() {
           <div className="flex items-center gap-2">
             <UsersRound aria-hidden="true" className="size-5 text-text-secondary" />
             <p className="text-sm text-text-secondary">Member management</p>
-            <Badge variant="neutral">M4</Badge>
+            {/* <Badge variant="neutral">M4</Badge> */}
           </div>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight">Members</h2>
           <p className="mt-2 text-sm text-text-secondary">

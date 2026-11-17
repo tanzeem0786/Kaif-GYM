@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, Dumbbell, Plus, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Badge } from '../../components/common/Badge.jsx'
+// import { Badge } from '../../components/common/Badge.jsx'
 import { Button } from '../../components/common/Button.jsx'
 import { Card } from '../../components/common/Card.jsx'
 import { TrainerStatusBadge } from '../../components/trainers/TrainerStatusBadge.jsx'
@@ -59,7 +59,7 @@ export function TrainersPage() {
           <div className="flex items-center gap-2">
             <Dumbbell aria-hidden="true" className="size-5 text-text-secondary" />
             <p className="text-sm text-text-secondary">Trainer management</p>
-            <Badge variant="neutral">M6</Badge>
+            {/* <Badge variant="neutral">M6</Badge> */}
           </div>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight">Trainers</h2>
           <p className="mt-2 text-sm text-text-secondary">Manage trainer profiles and review member assignment history.</p>

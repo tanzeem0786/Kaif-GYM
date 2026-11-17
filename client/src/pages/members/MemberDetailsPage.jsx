@@ -1,7 +1,7 @@
 import { ArrowLeft, CalendarDays, Edit3, Mail, Phone, RotateCcw, Trash2, UserRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Badge } from '../../components/common/Badge.jsx'
+// import { Badge } from '../../components/common/Badge.jsx'
 import { Button } from '../../components/common/Button.jsx'
 import { Card } from '../../components/common/Card.jsx'
 import { LoadingScreen } from '../../components/common/LoadingScreen.jsx'
@@ -270,7 +270,7 @@ export function MemberDetailsPage() {
           </Card>
           <Card className="p-5 sm:p-6">
             <div className="flex items-center gap-2">
-              <Badge variant="neutral">M7</Badge>
+              {/* <Badge variant="neutral">M7</Badge> */}
             </div>
             <h3 className="mt-4 text-base font-semibold">Payment history</h3>
             <p className="mt-2 text-sm leading-6 text-text-secondary">
