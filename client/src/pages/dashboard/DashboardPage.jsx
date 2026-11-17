@@ -135,7 +135,7 @@ export function DashboardPage() {
                 <span className="flex size-10 items-center justify-center rounded-xl border border-border bg-surface-elevated text-text-secondary">
                   <Icon aria-hidden="true" className="size-5" />
                 </span>
-                <Badge>{milestone}</Badge>
+                {/* <Badge>{milestone}</Badge> */}
               </div>
               <h4 className="mt-5 text-base font-semibold">{title}</h4>
               <p className="mt-1.5 text-sm text-text-muted">Not available until {milestone}</p>

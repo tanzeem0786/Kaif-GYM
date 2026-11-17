@@ -81,7 +81,7 @@ export function MembershipsPage() {
         <div>
           <div className="flex items-center gap-2">
             <p className="text-sm text-text-secondary">Member subscriptions</p>
-            <span className="rounded-md border border-border px-2 py-0.5 text-xs text-text-secondary">M5</span>
+            {/* <span className="rounded-md border border-border px-2 py-0.5 text-xs text-text-secondary">M5</span> */}
           </div>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight">Memberships</h2>
           <p className="mt-2 text-sm text-text-secondary">
