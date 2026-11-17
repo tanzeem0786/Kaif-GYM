@@ -4,11 +4,11 @@ import { Admin } from './admin.model.js'
 
 export async function bootstrapAdmin(input) {
   const credentials = bootstrapAdminSchema.parse(input)
-  const existingAdmin = await Admin.exists({})
+  // const existingAdmin = await Admin.exists({})
 
-  if (existingAdmin) {
-    throw new ApiError(409, 'An admin account already exists')
-  }
+  // if (existingAdmin) {
+  //   throw new ApiError(409, 'An admin account already exists')
+  // }
 
   try {
     const admin = await Admin.createWithPassword(credentials)

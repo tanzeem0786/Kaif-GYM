@@ -32,20 +32,12 @@ export const adminSchema = new mongoose.Schema(
       default: true,
       required: true,
     },
-    bootstrapKey: {
-      type: String,
-      default: 'owner',
-      immutable: true,
-      select: false,
-      required: true,
-      enum: ['owner'],
-    },
   },
   { timestamps: true, versionKey: false },
 )
 
 adminSchema.index({ email: 1 }, { unique: true })
-adminSchema.index({ bootstrapKey: 1 }, { unique: true })
+// adminSchema.index({ bootstrapKey: 1 }, { unique: true })
 
 adminSchema.methods.verifyPassword = function verifyPassword(password) {
   return bcrypt.compare(password, this.passwordHash)

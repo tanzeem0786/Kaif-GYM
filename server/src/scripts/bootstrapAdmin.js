@@ -62,10 +62,10 @@ async function main() {
   await connectDatabase(config.MONGODB_URI)
 
   try {
-    await Admin.init()
-    if (await Admin.exists({})) {
-      throw new Error('An admin account already exists.')
-    }
+    // await Admin.init()
+    // if (await Admin.exists({})) {
+    //   throw new Error('An admin account already exists.')
+    // }
 
     const terminal = createInterface({ input: stdin, output: stdout })
     let name
