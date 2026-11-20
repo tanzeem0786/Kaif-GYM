@@ -75,7 +75,6 @@ export function MemberForm({ member, submitting, errors = {}, onCancel, onSubmit
             label="Father's name"
             maxLength={100}
             onChange={setField('fatherName')}
-            required
             value={values.fatherName}
           />
           <TextField

@@ -101,7 +101,7 @@ const profileImageSchema = z.preprocess(
 
 const memberFields = {
   fullName: z.string().trim().min(1).max(100),
-  fatherName: z.string().trim().min(1).max(100),
+  fatherName: z.string().trim().max(100),
   phone: phoneSchema,
   email: optionalEmail,
   gender: optionalText(50),

@@ -189,7 +189,7 @@ export function MemberDetailsPage() {
           <dl className="mt-6 grid gap-x-6 gap-y-5 sm:grid-cols-2">
             <div>
               <dt className="text-xs text-text-muted">Father's name</dt>
-              <dd className="mt-1 text-sm text-text-primary">{member.fatherName}</dd>
+              <dd className="mt-1 text-sm text-text-primary">{member.fatherName || "Not Provided"}</dd>
             </div>
             <div>
               <dt className="text-xs text-text-muted">Phone</dt>
